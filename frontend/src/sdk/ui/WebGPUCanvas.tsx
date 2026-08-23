@@ -1,11 +1,7 @@
 import * as THREE from "three/webgpu";
 // import * as TSL from "three/tsl";
 //
-import {
-  Canvas,
-  extend,
-  ThreeToJSXElements,
-} from "@react-three/fiber";
+import { Canvas, extend, ThreeToJSXElements } from "@react-three/fiber";
 import { ReactNode } from "react";
 
 declare module "@react-three/fiber" {

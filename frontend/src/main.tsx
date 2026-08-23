@@ -10,7 +10,7 @@ import { ProjectsPage } from "./pages/ProjectsPage";
 import { VfxDesignPage } from "./pages/VfxDesignPage";
 import { WelcomePage } from "./pages/WelcomePage";
 import { useProjectsStore } from "./store/projectsStore";
-import { ColumnLayout } from "./components/Projects/Columnlayout";
+import { ColumnLayout } from "./components/Projects/ColumnLayout";
 
 //
 // ANYPORT (window as any).PORT
@@ -37,14 +37,8 @@ createRoot(document.getElementById("root")!).render(
             </ColumnLayout>
           }
         />
-        <Route
-          path="vfx-design"
-          element={
-            <ColumnLayout>
-              <VfxDesignPage />
-            </ColumnLayout>
-          }
-        />
+        <Route path="vfx-design" element={<VfxDesignPage />} />
+
         <Route
           path=":page"
           element={
