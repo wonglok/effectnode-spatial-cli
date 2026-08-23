@@ -25,11 +25,11 @@ export function WelcomePage() {
 
           <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-ink-500">
             Author real-time visual effects, ship them as portable{" "}
-            <span className="font-medium text-ink-700">.enfx</span> files, and
-            download the SDK to run them anywhere on WebGPU.
+            <span className="font-medium text-ink-700">.enfx.zip</span> files,
+            and download the SDK to run them anywhere on WebGPU.
           </p>
 
-          <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div className="mt-9 space-y-2 gap-3 flex flex-col">
             <Link
               to="/projects"
               className="btn-primary inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold sm:w-auto"
@@ -37,13 +37,13 @@ export function WelcomePage() {
               Launch the Studio
               <IconChevronRight className="h-4 w-4" />
             </Link>
-            <Link
+            {/* <Link
               to="/projects"
               className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-tiffany-300 bg-white/60 px-6 py-3 text-sm font-semibold text-tiffany-700 transition hover:border-tiffany-400 hover:bg-white"
             >
               <IconSdk className="h-4 w-4" />
               Download the SDK
-            </Link>
+            </Link> */}
           </div>
 
           <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
