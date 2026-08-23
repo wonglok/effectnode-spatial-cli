@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { findSceneNode, useEditorStore } from "../../store/editorStore";
-import type { SceneNode } from "../../store/editorStore";
+import type { SceneNode } from "../../types/scene";
 
 interface NumberFieldProps {
   label: string;

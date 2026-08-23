@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { CanvasArea } from "../sdk/ui/CanvasArea";
 import { api } from "../lib/api";
 import { getSocket, joinProjectRoom } from "../lib/socket";
-import type { SceneNode } from "../store/editorStore";
+import type { SceneNode } from "../types/scene";
 
 export function VfxPreviewPage() {
   const { projectID } = useParams();

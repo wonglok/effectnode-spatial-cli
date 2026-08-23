@@ -1,20 +1,5 @@
 import { create } from "zustand";
-
-export type SceneNodeType =
-  | "group"
-  | "mesh"
-  | "geometry"
-  | "material"
-  | "light"
-  | "model";
-
-export interface SceneNode {
-  id: string;
-  name: string;
-  type: SceneNodeType;
-  params?: Record<string, unknown>;
-  children?: SceneNode[];
-}
+import type { SceneNode, SceneNodeType } from "../types/scene";
 
 const DEFAULT_NAMES: Record<SceneNodeType, string> = {
   group: "Group",
@@ -25,23 +10,7 @@ const DEFAULT_NAMES: Record<SceneNodeType, string> = {
   model: "Model",
 };
 
-const INITIAL_SCENE: SceneNode[] = [
-  {
-    id: "box-mesh",
-    name: "Box",
-    type: "mesh",
-    children: [
-      { id: "box-geometry", name: "BoxGeometry", type: "geometry" },
-      {
-        id: "box-material",
-        name: "StandardMaterial",
-        type: "material",
-        params: { color: "#81d8d0", roughness: 0.4, metalness: 0.1 },
-      },
-    ],
-  },
-  { id: "ambient-light", name: "Ambient Light", type: "light" },
-];
+const INITIAL_SCENE: SceneNode[] = [];
 
 function removeRecursive(nodes: SceneNode[], id: string): SceneNode[] {
   return nodes
@@ -113,6 +82,7 @@ interface EditorState {
   removeNode: (id: string) => void;
   renameNode: (id: string, name: string) => void;
   updateNodeParams: (id: string, params: Record<string, unknown>) => void;
+  setScene: (scene: SceneNode[]) => void;
 }
 
 export const useEditorStore = create<EditorState>()((set) => ({
@@ -147,6 +117,8 @@ export const useEditorStore = create<EditorState>()((set) => ({
     set((state) => ({
       scene: updateParamsRecursive(state.scene, id, params),
     })),
+
+  setScene: (scene) => set({ scene, selectedId: scene[0]?.id ?? null }),
 }));
 
 export function findSceneNode(

@@ -1,4 +1,4 @@
-import type { SceneNode } from "../../store/editorStore";
+import type { SceneNode } from "../../types/scene";
 import { ModelNode } from "./ModelNode";
 
 /** Recursively renders a scene-graph node (group/mesh/geometry/material/light/model). */
