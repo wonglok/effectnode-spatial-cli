@@ -342,3 +342,21 @@ projectsRouter.get("/:projectID/assets", async (req, res) => {
   );
   res.json(entries.filter((e) => e.isFile()).map((e) => ({ name: e.name })));
 });
+
+// GET /api/projects/:projectID/uploads/:filename — serve an uploaded file.
+projectsRouter.get("/:projectID/uploads/:filename", async (req, res) => {
+  const project = await resolveProject(req.params.projectID);
+  if (!project) {
+    res.status(404).json({ error: "Project not found" });
+    return;
+  }
+  const filename = sanitizeFilename(req.params.filename);
+  const filepath = path.join(PROJECTS_ROOT, project.id, "uploads", filename);
+  try {
+    await fs.access(filepath);
+  } catch {
+    res.status(404).json({ error: "File not found" });
+    return;
+  }
+  res.sendFile(filepath);
+});

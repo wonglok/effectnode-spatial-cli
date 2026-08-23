@@ -12,6 +12,7 @@ const TYPE_ICONS: Record<SceneNodeType, ComponentType<{ className?: string }>> =
   geometry: IconAssets,
   material: IconMaterials,
   light: IconEffects,
+  model: IconAssets,
 };
 
 function TreeNode({ node, depth }: { node: SceneNode; depth: number }) {

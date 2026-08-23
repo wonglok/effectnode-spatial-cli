@@ -5,7 +5,8 @@ export type SceneNodeType =
   | "mesh"
   | "geometry"
   | "material"
-  | "light";
+  | "light"
+  | "model";
 
 export interface SceneNode {
   id: string;
@@ -21,6 +22,7 @@ const DEFAULT_NAMES: Record<SceneNodeType, string> = {
   geometry: "Geometry",
   material: "Material",
   light: "Light",
+  model: "Model",
 };
 
 const INITIAL_SCENE: SceneNode[] = [
@@ -103,7 +105,11 @@ interface EditorState {
   scene: SceneNode[];
   selectedId: string | null;
   select: (id: string | null) => void;
-  addNode: (type: SceneNodeType) => void;
+  addNode: (
+    type: SceneNodeType,
+    params?: Record<string, unknown>,
+    name?: string,
+  ) => void;
   removeNode: (id: string) => void;
   renameNode: (id: string, name: string) => void;
   updateNodeParams: (id: string, params: Record<string, unknown>) => void;
@@ -115,11 +121,16 @@ export const useEditorStore = create<EditorState>()((set) => ({
 
   select: (id) => set({ selectedId: id }),
 
-  addNode: (type) =>
+  addNode: (type, params, name) =>
     set((state) => ({
       scene: [
         ...state.scene,
-        { id: crypto.randomUUID(), name: DEFAULT_NAMES[type], type },
+        {
+          id: crypto.randomUUID(),
+          name: name ?? DEFAULT_NAMES[type],
+          type,
+          ...(params ? { params } : {}),
+        },
       ],
     })),
 

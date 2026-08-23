@@ -44,9 +44,9 @@ export function VfxDesignPage() {
       <div className="flex min-w-0 flex-1 flex-col">
         <Toolbar />
         <div className="min-h-0 flex-1 bg-white">
-          <CanvasArea scene={scene} />
+          <CanvasArea scene={scene} editable />
         </div>
-        <FileManager />
+        <FileManager projectId={project.slug} />
       </div>
 
       <PropsEditor />
