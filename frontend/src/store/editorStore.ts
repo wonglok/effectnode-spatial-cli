@@ -73,8 +73,10 @@ function findRecursive(
 
 interface EditorState {
   scene: SceneNode[];
-  selectedId: string | null;
+  selectedIds: string[];
   select: (id: string | null) => void;
+  toggleSelect: (id: string) => void;
+  clearSelection: () => void;
   addNode: (
     type: SceneNodeType,
     params?: Record<string, unknown>,
@@ -88,9 +90,16 @@ interface EditorState {
 
 export const useEditorStore = create<EditorState>()((set) => ({
   scene: INITIAL_SCENE,
-  selectedId: "box-mesh",
+  selectedIds: [],
 
-  select: (id) => set({ selectedId: id }),
+  select: (id) => set({ selectedIds: id ? [id] : [] }),
+  toggleSelect: (id) =>
+    set((state) => ({
+      selectedIds: state.selectedIds.includes(id)
+        ? state.selectedIds.filter((x) => x !== id)
+        : [...state.selectedIds, id],
+    })),
+  clearSelection: () => set({ selectedIds: [] }),
 
   addNode: (type, params, name) =>
     set((state) => ({
@@ -108,7 +117,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
   removeNode: (id) =>
     set((state) => ({
       scene: removeRecursive(state.scene, id),
-      selectedId: state.selectedId === id ? null : state.selectedId,
+      selectedIds: state.selectedIds.filter((x) => x !== id),
     })),
 
   renameNode: (id, name) =>
@@ -119,7 +128,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
       scene: updateParamsRecursive(state.scene, id, params),
     })),
 
-  setScene: (scene) => set({ scene, selectedId: scene[0]?.id ?? null }),
+  setScene: (scene) => set({ scene, selectedIds: [] }),
 }));
 
 export function findSceneNode(

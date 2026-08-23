@@ -334,9 +334,12 @@ function ColliderSection({ node }: { node: SceneNode }) {
 
 export function PropsEditor() {
   const scene = useEditorStore((state) => state.scene);
-  const selectedId = useEditorStore((state) => state.selectedId);
+  const selectedIds = useEditorStore((state) => state.selectedIds);
   const renameNode = useEditorStore((state) => state.renameNode);
-  const node = findSceneNode(scene, selectedId);
+  const node =
+    selectedIds.length === 1
+      ? findSceneNode(scene, selectedIds[0])
+      : undefined;
 
   return (
     <aside className="flex w-72 shrink-0 flex-col border-l border-ink-200 bg-white">
@@ -344,7 +347,11 @@ export function PropsEditor() {
         Properties
       </div>
 
-      {node ? (
+      {selectedIds.length > 1 ? (
+        <p className="p-4 text-sm text-ink-500">
+          {selectedIds.length} items selected
+        </p>
+      ) : node ? (
         <div key={node.id} className="flex-1 space-y-5 overflow-y-auto p-4">
           <label className="block">
             <span className="text-[11px] font-medium text-ink-500">Name</span>

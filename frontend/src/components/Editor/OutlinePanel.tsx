@@ -17,16 +17,19 @@ const TYPE_ICONS: Record<
 };
 
 function TreeNode({ node, depth }: { node: SceneNode; depth: number }) {
-  const selectedId = useEditorStore((state) => state.selectedId);
+  const selectedIds = useEditorStore((state) => state.selectedIds);
   const select = useEditorStore((state) => state.select);
+  const toggleSelect = useEditorStore((state) => state.toggleSelect);
   const Icon = TYPE_ICONS[node.type];
-  const isActive = selectedId === node.id;
+  const isActive = selectedIds.includes(node.id);
 
   return (
     <div>
       <button
         type="button"
-        onClick={() => select(node.id)}
+        onClick={(e) =>
+          e.shiftKey ? toggleSelect(node.id) : select(node.id)
+        }
         style={{ paddingLeft: `${depth * 14 + 10}px` }}
         className={[
           "flex w-full items-center gap-2 py-1.5 pr-3 text-left text-sm transition",

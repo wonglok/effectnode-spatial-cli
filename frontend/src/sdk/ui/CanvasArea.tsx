@@ -3,6 +3,7 @@ import { OrbitControls } from "@react-three/drei";
 import type { SceneNode } from "../types/scene";
 import { PlacementController } from "./PlacementController";
 import { SceneElement } from "./SceneElement";
+import { TransformGizmo } from "./TransformGizmo";
 import { WebGPUCanvas } from "./WebGPUCanvas";
 
 export function CanvasArea({
@@ -24,6 +25,7 @@ export function CanvasArea({
 
       {editable && <OrbitControls makeDefault enableDamping />}
       {editable && <gridHelper args={[100, 100, 0x777777, 0xbababa]} />}
+      {editable && <TransformGizmo />}
       {editable && <PlacementController />}
     </WebGPUCanvas>
   );
