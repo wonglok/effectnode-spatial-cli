@@ -8,7 +8,7 @@ import { Toolbar } from "../components/Editor/Toolbar";
 import { api } from "../lib/api";
 import { joinProjectRoom, sendDesignUpdate } from "../lib/socket";
 import { useEditorStore } from "../store/editorStore";
-import type { SceneNode } from "../types/scene";
+import type { SceneNode } from "../sdk/types/scene";
 import { useProjectsStore } from "../store/projectsStore";
 import { useUiStore } from "../store/uiStore";
 

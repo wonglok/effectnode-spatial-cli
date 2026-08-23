@@ -1,5 +1,5 @@
-import type { SceneNode } from "../../types/scene";
-import { readVec3 } from "../../lib/vec3";
+import type { SceneNode } from "../types/scene";
+import { readVec3 } from "../types/vec3";
 import { EnvironmentNode } from "./EnvironmentNode";
 import { ModelNode } from "./ModelNode";
 
@@ -50,6 +50,7 @@ export function SceneElement({ node }: { node: SceneNode }) {
       return <mesh {...transformProps(node)}>{children}</mesh>;
     case "geometry":
       return <boxGeometry />;
+
     case "material": {
       const params = node.params ?? {};
       const color = typeof params.color === "string" ? params.color : "#ffffff";
@@ -65,6 +66,7 @@ export function SceneElement({ node }: { node: SceneNode }) {
         />
       );
     }
+
     case "model": {
       const src = node.params?.src;
       if (typeof src !== "string") return null;
@@ -85,6 +87,7 @@ export function SceneElement({ node }: { node: SceneNode }) {
         typeof node.params?.backgroundIntensity === "number"
           ? node.params.backgroundIntensity
           : 1;
+
       return (
         <EnvironmentNode
           src={src}

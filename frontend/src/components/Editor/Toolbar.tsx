@@ -1,5 +1,5 @@
 import { useEditorStore } from "../../store/editorStore";
-import type { SceneNodeType } from "../../types/scene";
+import type { SceneNodeType } from "../../sdk/types/scene";
 import { IconPlus, IconTrash } from "../icons";
 
 const ADD_BUTTONS: { type: SceneNodeType; label: string }[] = [

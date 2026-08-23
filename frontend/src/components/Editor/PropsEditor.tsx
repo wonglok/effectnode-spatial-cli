@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { findSceneNode, useEditorStore } from "../../store/editorStore";
-import type { SceneNode } from "../../types/scene";
-import { readVec3, type Vec3 } from "../../lib/vec3";
+import type { SceneNode } from "../../sdk/types/scene";
+import { readVec3, type Vec3 } from "../../sdk/types/vec3";
 import { IconPlus, IconTrash } from "../icons";
 
 function Vec3Editor({
@@ -77,8 +77,7 @@ function MaterialParamsSection({ node }: { node: SceneNode }) {
   const color = typeof params.color === "string" ? params.color : "#ffffff";
   const roughness =
     typeof params.roughness === "number" ? params.roughness : 0.5;
-  const metalness =
-    typeof params.metalness === "number" ? params.metalness : 0;
+  const metalness = typeof params.metalness === "number" ? params.metalness : 0;
 
   return (
     <section className="space-y-4">
@@ -152,7 +151,9 @@ function EnvironmentParamsSection({ node }: { node: SceneNode }) {
       <label className="block">
         <span className="flex items-center justify-between text-[11px] font-medium text-ink-500">
           <span>Environment Intensity</span>
-          <span className="text-ink-400">{environmentIntensity.toFixed(2)}</span>
+          <span className="text-ink-400">
+            {environmentIntensity.toFixed(2)}
+          </span>
         </span>
         <input
           type="range"

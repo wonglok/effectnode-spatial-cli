@@ -1,5 +1,5 @@
 import { io, type Socket } from "socket.io-client";
-import type { SceneNode } from "../types/scene";
+import type { SceneNode } from "../sdk/types/scene";
 
 let socket: Socket | null = null;
 

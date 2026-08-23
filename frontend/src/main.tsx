@@ -28,11 +28,14 @@ createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
     <Routes>
       <Route path="/" element={<WelcomePage />} />
+
       <Route path="/projects" element={<ProjectsPage />} />
+
       <Route
         path="/projects/:projectID/vfx-preview"
         element={<VfxPreviewPage />}
       />
+
       <Route path="/projects/:projectID" element={<ProjectLayout />}>
         <Route
           index
@@ -42,6 +45,7 @@ createRoot(document.getElementById("root")!).render(
             </ColumnLayout>
           }
         />
+
         <Route path="vfx-design" element={<VfxDesignPage />} />
 
         <Route
@@ -53,6 +57,7 @@ createRoot(document.getElementById("root")!).render(
           }
         />
       </Route>
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   </BrowserRouter>,

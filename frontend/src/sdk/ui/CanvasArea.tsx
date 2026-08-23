@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { OrbitControls } from "@react-three/drei";
-import type { SceneNode } from "../../types/scene";
+import type { SceneNode } from "../types/scene";
 import { PlacementController } from "./PlacementController";
 import { SceneElement } from "./SceneElement";
 import { WebGPUCanvas } from "./WebGPUCanvas";

@@ -1,9 +1,12 @@
 import type { ComponentType } from "react";
 import { useEditorStore } from "../../store/editorStore";
-import type { SceneNode, SceneNodeType } from "../../types/scene";
+import type { SceneNode, SceneNodeType } from "../../sdk/types/scene";
 import { IconAssets, IconEffects, IconFolder, IconMaterials } from "../icons";
 
-const TYPE_ICONS: Record<SceneNodeType, ComponentType<{ className?: string }>> = {
+const TYPE_ICONS: Record<
+  SceneNodeType,
+  ComponentType<{ className?: string }>
+> = {
   group: IconFolder,
   mesh: IconAssets,
   geometry: IconAssets,

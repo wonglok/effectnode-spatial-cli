@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { SceneNode, SceneNodeType } from "../types/scene";
+import type { SceneNode, SceneNodeType } from "../sdk/types/scene";
 
 const DEFAULT_NAMES: Record<SceneNodeType, string> = {
   group: "Group",
