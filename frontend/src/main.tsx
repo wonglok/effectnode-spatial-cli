@@ -9,6 +9,7 @@ import { ProjectPage } from "./pages/ProjectPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { VfxDesignPage } from "./pages/VfxDesignPage";
 import { WelcomePage } from "./pages/WelcomePage";
+import { useProjectsStore } from "./store/projectsStore";
 
 //
 // ANYPORT (window as any).PORT
@@ -17,6 +18,9 @@ import { WelcomePage } from "./pages/WelcomePage";
 //
 // ANYPORT (window as any).PROTOCOL HTTPS OR HTTP
 //
+
+// Load projects from the backend before the first render.
+useProjectsStore.getState().fetchProjects();
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>

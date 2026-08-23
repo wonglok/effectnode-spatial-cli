@@ -1,100 +1,70 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import type { AccentKey, Project, ProjectStats } from "../lib/types";
+import type { Project } from "../lib/types";
+import { api } from "../lib/api";
 
-const ACCENTS: AccentKey[] = ["tiffany", "periwinkle", "blush", "sky", "mint"];
+type LoadStatus = "loading" | "ready" | "error";
 
-function uid(): string {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-  return `proj-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+interface CreateProjectInput {
+  name?: string;
+  description?: string;
 }
 
-function makeStats(): ProjectStats {
-  return {
-    effects: Math.floor(Math.random() * 6),
-    materials: Math.floor(Math.random() * 8) + 1,
-    assets: Math.floor(Math.random() * 14) + 2,
-  };
+interface UpdateProjectInput {
+  name?: string;
+  description?: string;
+  status?: Project["status"];
+  accent?: Project["accent"];
 }
-
-const SEED_PROJECTS: Project[] = [
-  {
-    id: "aurora-bloom",
-    name: "Aurora Bloom",
-    description: "A dreamy particle bloom drifting through a tiffany sky.",
-    status: "published",
-    createdAt: "2026-08-12T09:00:00.000Z",
-    updatedAt: "2026-08-23T10:30:00.000Z",
-    accent: "periwinkle",
-    stats: { effects: 4, materials: 6, assets: 14 },
-  },
-  {
-    id: "neon-drift",
-    name: "Neon Drift",
-    description: "Cinematic neon light trails with a frosted-glass bloom.",
-    status: "published",
-    createdAt: "2026-08-15T14:20:00.000Z",
-    updatedAt: "2026-08-22T18:05:00.000Z",
-    accent: "tiffany",
-    stats: { effects: 7, materials: 9, assets: 21 },
-  },
-  {
-    id: "glass-prism",
-    name: "Glass Prism",
-    description: "Refractive material study — clearcoat, transmission, iridescence.",
-    status: "draft",
-    createdAt: "2026-08-20T11:45:00.000Z",
-    updatedAt: "2026-08-21T09:12:00.000Z",
-    accent: "sky",
-    stats: { effects: 1, materials: 12, assets: 6 },
-  },
-];
 
 interface ProjectsState {
   projects: Project[];
-  createProject: (input?: { name?: string; description?: string }) => Project;
-  updateProject: (id: string, patch: Partial<Project>) => void;
-  removeProject: (id: string) => void;
+  status: LoadStatus;
+  error: string | null;
+  fetchProjects: () => Promise<void>;
+  createProject: (input?: CreateProjectInput) => Promise<Project>;
+  updateProject: (id: string, patch: UpdateProjectInput) => Promise<void>;
+  removeProject: (id: string) => Promise<void>;
 }
 
-export const useProjectsStore = create<ProjectsState>()(
-  persist(
-    (set, get) => ({
-      projects: SEED_PROJECTS,
+function message(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
 
-      createProject: (input = {}) => {
-        const now = new Date().toISOString();
-        const index = get().projects.length + 1;
-        const project: Project = {
-          id: uid(),
-          name: input.name?.trim() || `Untitled Project ${index}`,
-          description: input.description?.trim() || "",
-          status: "draft",
-          createdAt: now,
-          updatedAt: now,
-          accent: ACCENTS[index % ACCENTS.length],
-          stats: makeStats(),
-        };
-        set((state) => ({ projects: [project, ...state.projects] }));
-        return project;
-      },
+export const useProjectsStore = create<ProjectsState>()((set) => ({
+  projects: [],
+  status: "loading",
+  error: null,
 
-      updateProject: (id, patch) =>
-        set((state) => ({
-          projects: state.projects.map((project) =>
-            project.id === id
-              ? { ...project, ...patch, updatedAt: new Date().toISOString() }
-              : project,
-          ),
-        })),
+  fetchProjects: async () => {
+    set({ status: "loading", error: null });
+    try {
+      const projects = await api.get<Project[]>("/projects");
+      set({ projects, status: "ready" });
+    } catch (err) {
+      set({ status: "error", error: message(err) });
+    }
+  },
 
-      removeProject: (id) =>
-        set((state) => ({
-          projects: state.projects.filter((project) => project.id !== id),
-        })),
-    }),
-    { name: "effectnode-projects" },
-  ),
-);
+  createProject: async (input = {}) => {
+    const project = await api.post<Project>("/projects", input);
+    set((state) => ({ projects: [project, ...state.projects] }));
+    return project;
+  },
+
+  updateProject: async (id, patch) => {
+    const updated = await api.patch<Project>(
+      `/projects/${encodeURIComponent(id)}`,
+      patch,
+    );
+    set((state) => ({
+      projects: state.projects.map((p) => (p.id === id ? updated : p)),
+    }));
+  },
+
+  removeProject: async (id) => {
+    await api.remove(`/projects/${encodeURIComponent(id)}`);
+    set((state) => ({
+      projects: state.projects.filter((p) => p.id !== id),
+    }));
+  },
+}));

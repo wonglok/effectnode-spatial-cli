@@ -1,5 +1,5 @@
-import * as TSL from 'three/webgpu';
-import { NodeRegistry } from './types';
+import * as TSL from "three/webgpu";
+import { NodeRegistry } from "./types";
 
 /**
  * Builds and returns a registry mapping class names (e.g. 'FloatNode', 'OperatorNode')
@@ -12,7 +12,7 @@ export function createDefaultNodeRegistry(): NodeRegistry {
   for (const [key, value] of Object.entries(TSL)) {
     // Check if export is a constructor class and inherits from Node
     if (
-      typeof value === 'function' &&
+      typeof value === "function" &&
       value.prototype &&
       (value.prototype instanceof TSL.Node || value === TSL.Node)
     ) {

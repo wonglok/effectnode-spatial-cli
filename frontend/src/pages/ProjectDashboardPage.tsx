@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
 import type { ComponentType } from "react";
+import { Link, useParams } from "react-router-dom";
 import {
   IconAssets,
   IconEffects,
@@ -16,47 +16,23 @@ interface StatCardProps {
   icon: ComponentType<{ className?: string }>;
   label: string;
   value: number;
-  hint: string;
 }
 
-function StatCard({ icon: Icon, label, value, hint }: StatCardProps) {
+function StatCard({ icon: Icon, label, value }: StatCardProps) {
   return (
-    <div className="glass rounded-2xl p-5 shadow-card">
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-ink-500">{label}</span>
-        <Icon className="h-5 w-5 text-tiffany-500" />
-      </div>
-      <div className="mt-2 text-3xl font-semibold text-ink-900">{value}</div>
-      <div className="mt-1 text-xs text-ink-400">{hint}</div>
-    </div>
-  );
-}
-
-interface QuickActionProps {
-  to: string;
-  icon: ComponentType<{ className?: string }>;
-  title: string;
-  description: string;
-}
-
-function QuickAction({ to, icon: Icon, title, description }: QuickActionProps) {
-  return (
-    <Link
-      to={to}
-      className="glass group rounded-2xl p-5 shadow-card transition hover:shadow-card-hover"
-    >
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-tiffany-100 text-tiffany-600">
+    <div className="card rounded-xl p-5">
+      <div className="flex items-center gap-3.5">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-tiffany-50 text-tiffany-600">
           <Icon className="h-5 w-5" />
         </div>
-        <div className="min-w-0">
-          <div className="font-medium text-ink-900 transition group-hover:text-tiffany-700">
-            {title}
+        <div>
+          <div className="text-2xl font-semibold leading-none text-ink-900">
+            {value}
           </div>
-          <div className="truncate text-xs text-ink-500">{description}</div>
+          <div className="mt-1.5 text-sm text-ink-600">{label}</div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
 
@@ -81,11 +57,16 @@ export function ProjectDashboardPage() {
     setEditing(true);
   };
 
-  const saveEdit = () => {
-    updateProject(project.id, {
-      name: draftName,
-      description: draftDescription,
-    });
+  const saveEdit = async () => {
+    try {
+      await updateProject(project.id, {
+        name: draftName,
+        description: draftDescription,
+      });
+    } catch {
+      // Save failed; keep editing so the user can retry.
+      return;
+    }
     setEditing(false);
   };
 
@@ -96,7 +77,7 @@ export function ProjectDashboardPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-4xl">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
@@ -105,26 +86,26 @@ export function ProjectDashboardPage() {
               <input
                 value={draftName}
                 onChange={(e) => setDraftName(e.target.value)}
-                className="w-full rounded-xl border border-ink-100 bg-white/70 px-4 py-2 text-2xl font-semibold text-ink-900 outline-none transition focus:border-tiffany-400 focus:ring-2 focus:ring-tiffany-300/40"
+                className="w-full rounded-lg border border-ink-200 bg-white px-3.5 py-2 text-xl font-semibold text-ink-900 outline-none transition focus:border-tiffany-400 focus:ring-2 focus:ring-tiffany-300/40"
               />
               <textarea
                 value={draftDescription}
                 onChange={(e) => setDraftDescription(e.target.value)}
                 rows={2}
-                className="w-full resize-none rounded-xl border border-ink-100 bg-white/70 px-4 py-2 text-sm text-ink-700 outline-none transition focus:border-tiffany-400 focus:ring-2 focus:ring-tiffany-300/40"
+                className="w-full resize-none rounded-lg border border-ink-200 bg-white px-3.5 py-2 text-sm text-ink-700 outline-none transition focus:border-tiffany-400 focus:ring-2 focus:ring-tiffany-300/40"
               />
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={saveEdit}
-                  className="btn-primary rounded-full px-4 py-2 text-sm font-semibold"
+                  className="btn-primary rounded-lg px-4 py-2 text-sm font-semibold"
                 >
                   Save
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditing(false)}
-                  className="rounded-full px-4 py-2 text-sm text-ink-500 transition hover:text-ink-800"
+                  className="rounded-lg px-4 py-2 text-sm text-ink-600 transition hover:text-ink-900"
                 >
                   Cancel
                 </button>
@@ -132,10 +113,10 @@ export function ProjectDashboardPage() {
             </div>
           ) : (
             <>
-              <h1 className="truncate text-3xl font-semibold text-ink-900">
+              <h1 className="truncate text-2xl font-semibold text-ink-900">
                 {project.name}
               </h1>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-500">
+              <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-ink-600">
                 {project.description || "No description yet."}
               </p>
             </>
@@ -146,78 +127,68 @@ export function ProjectDashboardPage() {
           <button
             type="button"
             onClick={startEdit}
-            className="shrink-0 rounded-full border border-ink-100 bg-white/60 px-4 py-2 text-sm font-medium text-ink-600 transition hover:border-tiffany-300 hover:text-tiffany-700"
+            className="btn-secondary shrink-0 rounded-lg px-4 py-2 text-sm font-medium"
           >
             Edit details
           </button>
         )}
       </div>
 
-      {/* Stat cards */}
+      {/* Stats */}
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           icon={IconEffects}
           label="Effects"
           value={project.stats.effects}
-          hint="Node-based effects"
         />
         <StatCard
           icon={IconMaterials}
           label="Materials"
           value={project.stats.materials}
-          hint="TSL material graphs"
         />
         <StatCard
           icon={IconAssets}
           label="Assets"
           value={project.stats.assets}
-          hint="Draco + AVIF assets"
         />
       </div>
 
       {/* Quick actions */}
-      <section className="mt-10">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-400">
-          Quick actions
-        </h2>
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <QuickAction
+      <section className="mt-8">
+        <h2 className="text-base font-semibold text-ink-900">Quick actions</h2>
+        <div className="mt-3 flex flex-wrap gap-2.5">
+          <Link
             to={`${base}/vfx-design`}
-            icon={IconPlus}
-            title="New effect"
-            description="Start a fresh node graph"
-          />
-          <QuickAction
+            className="btn-secondary inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium"
+          >
+            <IconPlus className="h-4 w-4" /> New effect
+          </Link>
+          <Link
             to={`${base}/export`}
-            icon={IconExport}
-            title="Export .enfx"
-            description="Package this project"
-          />
-          <QuickAction
+            className="btn-secondary inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium"
+          >
+            <IconExport className="h-4 w-4" /> Export .enfx
+          </Link>
+          <Link
             to={`${base}/sdk`}
-            icon={IconSdk}
-            title="Download SDK"
-            description="Load .enfx anywhere"
-          />
+            className="btn-secondary inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium"
+          >
+            <IconSdk className="h-4 w-4" /> Download SDK
+          </Link>
         </div>
       </section>
 
-      {/* Recent activity */}
-      <section className="mt-10">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-400">
-          Activity
-        </h2>
-        <div className="glass mt-4 divide-y divide-ink-100 rounded-2xl shadow-card">
+      {/* Activity */}
+      <section className="mt-8">
+        <h2 className="text-base font-semibold text-ink-900">Activity</h2>
+        <div className="card mt-3 divide-y divide-ink-100 rounded-xl">
           {activity.map((item) => (
             <div
               key={item.label}
-              className="flex items-center justify-between px-5 py-4"
+              className="flex items-center justify-between px-5 py-3.5"
             >
-              <span className="flex items-center gap-3 text-sm text-ink-700">
-                <span className="h-2 w-2 rounded-full bg-tiffany-400" />
-                {item.label}
-              </span>
-              <span className="text-sm text-ink-400">{item.when}</span>
+              <span className="text-sm text-ink-700">{item.label}</span>
+              <span className="text-sm text-ink-500">{item.when}</span>
             </div>
           ))}
         </div>

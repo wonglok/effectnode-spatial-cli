@@ -15,41 +15,19 @@ import { createServer as createNetServer } from "node:net";
 import { homedir } from "node:os";
 import express from "express";
 import cors from "cors";
+import { projectsRouter } from "./routers/projects.js";
 // import { renderMediaRoutes } from "./render-media.js";
 // import { agentBackend } from "./agent/agent-backend.js";
 // import { generationQueueSetup } from "./generation-queue.js";
 import { createServer } from "node:http";
 
-// import { readdir } from "node:fs/promises";
-// import { rename } from "node:fs/promises";
-// import { execSync } from "node:child_process";
-
-// const DEV_SERVER_PORT = 5173;
-// const DEV_SERVER_URL = `http://localhost:${DEV_SERVER_PORT}`;
-
-// // Check if Vite dev server is running for HMR
-// async function getMainViewUrl(): Promise<string> {
-//   const channel = await Updater.localInfo.channel();
-//   if (channel === "dev") {
-//     try {
-//       await fetch(DEV_SERVER_URL, { method: "HEAD" });
-//       console.log(`HMR enabled: Using Vite dev server at ${DEV_SERVER_URL}`);
-//       return DEV_SERVER_URL;
-//     } catch {
-//       console.log(
-//         "Vite dev server not running. Run 'bun run dev:hmr' for HMR support.",
-//       );
-//     }
-//   }
-//   return "views://mainview/index.html";
-// }
-
 // App configuration
 // const APP_NAME = "Media Studio by loklok";
-const APP_DATA_DIR = join(homedir(), "spatial-studio");
-const PYTHON_DIR = join(APP_DATA_DIR, "python-src");
-const PROJECTS_DIR = join(APP_DATA_DIR, "projects");
-const JSON_DIR = join(APP_DATA_DIR, "json");
+export const APP_DATA_DIR = join(homedir(), "spatial-studio");
+export const PYTHON_DIR = join(APP_DATA_DIR, "python-src");
+export const PROJECTS_DIR = join(APP_DATA_DIR, "projects");
+export const JSON_DIR = join(APP_DATA_DIR, "json");
+
 const BACKEND_PORT_START = 5201;
 let BACKEND_PORT = BACKEND_PORT_START;
 
@@ -109,6 +87,8 @@ export async function runSetup({
   app.get("/api/hi", (req, res) => {
     res.json({ hi: "hi" });
   });
+
+  app.use("/api/projects", projectsRouter);
 
   app.listen(BACKEND_PORT);
 

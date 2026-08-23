@@ -1,4 +1,4 @@
-import type { Node, NodeMaterial } from "three/webgpu";
+import type { Node } from "three/webgpu";
 
 export interface SerializedNode {
   id: string;
