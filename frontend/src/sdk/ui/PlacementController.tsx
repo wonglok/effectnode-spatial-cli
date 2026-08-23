@@ -42,6 +42,11 @@ export function PlacementController() {
           }
           if (it.geometry) {
             list.push(it);
+            return;
+          }
+          if (it.userData.isCollider) {
+            list.push(it);
+            return;
           }
         }
       });
@@ -54,7 +59,7 @@ export function PlacementController() {
           } else if (a.distance < b.distance) {
             return 1;
           } else {
-            0;
+            return 0;
           }
         });
         return [hits[0].point.x, hits[0].point.y, hits[0].point.z];
