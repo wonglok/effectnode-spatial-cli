@@ -1,5 +1,5 @@
 import type { SceneNode } from "../../store/editorStore";
-import { WebGPUCanvas } from "../../sdk/ui/WebGPUCanvas";
+import { WebGPUCanvas } from "./WebGPUCanvas";
 
 function SceneElement({ node }: { node: SceneNode }) {
   const children = node.children?.map((child) => (

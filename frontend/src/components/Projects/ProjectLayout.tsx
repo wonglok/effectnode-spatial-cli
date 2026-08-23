@@ -182,7 +182,7 @@ export function ProjectLayout() {
 
         {/* Main column */}
         <div className="w-full h-full">
-          <header className="h-[60px] flex items-center justify-between gap-4 border-b border-ink-200 bg-white px-6 py-3 lg:px-8">
+          <header className="h-[69px] flex items-center justify-between gap-4 border-b border-ink-200 bg-white px-6 py-3 lg:px-8">
             <nav className="flex items-center gap-2 text-sm text-ink-500">
               <Link to="/projects" className="transition hover:text-ink-800">
                 Projects
@@ -201,7 +201,7 @@ export function ProjectLayout() {
             </Link>
           </header>
 
-          <main className="w-full h-[calc(100%-60px)]">
+          <main className="w-full h-[calc(100%-69px)]">
             <div className="w-full h-full">
               <Outlet />
             </div>

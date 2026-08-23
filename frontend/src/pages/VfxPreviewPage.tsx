@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { CanvasArea } from "../components/Editor/CanvasArea";
+import { CanvasArea } from "../sdk/ui/CanvasArea";
 import { api } from "../lib/api";
 import { getSocket, joinProjectRoom } from "../lib/socket";
 import type { SceneNode } from "../store/editorStore";
