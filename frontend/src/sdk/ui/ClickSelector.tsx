@@ -3,10 +3,22 @@ import * as THREE from "three/webgpu";
 import { useThree } from "@react-three/fiber";
 import { useEditorStore } from "../../store/editorStore";
 
+/** Walk up from a hit object to find its scene-node id, skipping colliders. */
+function findNodeId(object: THREE.Object3D): string | null {
+  let obj: THREE.Object3D | null = object;
+  while (obj) {
+    const userData = obj.userData as { nodeId?: unknown; isCollider?: unknown };
+    if (userData.isCollider === true) return null;
+    if (typeof userData.nodeId === "string") return userData.nodeId;
+    obj = obj.parent;
+  }
+  return null;
+}
+
 /**
  * Canvas click-to-select. On a click (no drag) raycast the pointer and select
- * the scene node under it (shift = toggle). Works for GLB primitives too by
- * walking up the parent chain to the wrapper tagged with `userData.nodeId`.
+ * the scene node under it (shift = toggle), skipping collider meshes. Works for
+ * GLB primitives too by walking up the parent chain via `userData.nodeId`.
  */
 export function ClickSelector() {
   const { camera, gl, scene, raycaster } = useThree();
@@ -35,17 +47,14 @@ export function ClickSelector() {
       );
       raycaster.setFromCamera(ndc, camera);
       const hits = raycaster.intersectObjects(scene.children, true);
-      if (hits.length === 0) return;
 
-      let obj: THREE.Object3D | null = hits[0].object;
-      while (obj) {
-        const nodeId = (obj.userData as { nodeId?: unknown }).nodeId;
-        if (typeof nodeId === "string") {
+      for (const hit of hits) {
+        const nodeId = findNodeId(hit.object);
+        if (nodeId) {
           if (e.shiftKey) toggleSelect(nodeId);
           else select(nodeId);
           return;
         }
-        obj = obj.parent;
       }
     };
 
