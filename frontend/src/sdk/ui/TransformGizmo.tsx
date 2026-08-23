@@ -9,6 +9,8 @@ import { readVec3 } from "../types/vec3";
  * A translate gizmo for the current multi-selection. A hidden pivot Object3D is
  * centered at the selection's centroid and driven by three's TransformControls;
  * each `objectChange` delta is applied to every selected node's position.
+ * While the gizmo is being dragged, OrbitControls is disabled so the camera
+ * doesn't fight the gizmo.
  */
 export function TransformGizmo() {
   const { camera, gl, scene } = useThree();
@@ -16,6 +18,12 @@ export function TransformGizmo() {
 
   const selectedIdsRef = useRef(selectedIds);
   selectedIdsRef.current = selectedIds;
+
+  const orbitControls = useThree((state) => state.controls) as {
+    enabled: boolean;
+  } | null;
+  const orbitControlsRef = useRef(orbitControls);
+  orbitControlsRef.current = orbitControls;
 
   const pivotRef = useRef<THREE.Object3D | null>(null);
   const helperRef = useRef<THREE.Object3D | null>(null);
@@ -53,10 +61,32 @@ export function TransformGizmo() {
       lastPos.current.copy(pivot.position);
     };
 
+    const setOrbitEnabled = (enabled: boolean) => {
+      if (orbitControlsRef.current) {
+        orbitControlsRef.current.enabled = enabled;
+      }
+    };
+
+    const onDraggingChanged = (event: unknown) => {
+      const dragging = (event as { value?: boolean }).value === true;
+      setOrbitEnabled(!dragging);
+    };
+
+    // Re-enable orbit when the pointer is released anywhere, or the window
+    // loses focus mid-drag.
+    const onWindowBlur = () => setOrbitEnabled(true);
+    const onWindowPointerUp = () => setOrbitEnabled(true);
+
     controls.addEventListener("objectChange", onObjectChange);
+    controls.addEventListener("dragging-changed", onDraggingChanged);
+    window.addEventListener("blur", onWindowBlur);
+    window.addEventListener("pointerup", onWindowPointerUp);
 
     return () => {
       controls.removeEventListener("objectChange", onObjectChange);
+      controls.removeEventListener("dragging-changed", onDraggingChanged);
+      window.removeEventListener("blur", onWindowBlur);
+      window.removeEventListener("pointerup", onWindowPointerUp);
       controls.detach();
       controls.dispose();
       scene.remove(helper);
