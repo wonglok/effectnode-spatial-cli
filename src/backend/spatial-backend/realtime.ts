@@ -1,15 +1,22 @@
 import type { Server, Socket } from "socket.io";
-import { saveDesign } from "./routers/projects.js";
+import {
+  deleteSceneNode,
+  listSceneNodes,
+  saveDesign,
+  saveSceneNode,
+} from "./routers/projects.js";
 
 function projectRoom(projectId: string): string {
   return `project:${projectId}`;
 }
 
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 /**
- * Wire up socket.io for realtime design sync. A client joins a per-project
- * room with `project:join { projectId }`; when it emits `design:update`, we
- * persist the design and broadcast `design:updated` to everyone else in the
- * room (e.g. a phone viewing the /vfx-preview route).
+ * Wire up socket.io for realtime sync: per-project rooms, whole-design sync,
+ * and per-scene-node CRUD (reads ack, writes broadcast to the room).
  */
 export function setupRealtime(io: Server): void {
   io.on("connection", (socket: Socket) => {
@@ -20,21 +27,65 @@ export function setupRealtime(io: Server): void {
       }
     });
 
+    // Whole-design sync (editor pushes, preview follows).
     socket.on("design:update", async (payload: unknown) => {
       const { projectId, design } = (payload ?? {}) as {
         projectId?: unknown;
         design?: unknown;
       };
-
       if (typeof projectId !== "string" || !projectId) return;
-
       try {
         await saveDesign(projectId, design);
         io.to(projectRoom(projectId)).emit("design:updated", { design });
       } catch (err) {
-        socket.emit("design:error", {
-          error: err instanceof Error ? err.message : String(err),
-        });
+        socket.emit("design:error", { error: errorMessage(err) });
+      }
+    });
+
+    // Scene-node CRUD.
+    socket.on(
+      "scene-node:list",
+      async (payload: unknown, ack?: (res: unknown) => void) => {
+        const projectId = (payload as { projectId?: unknown } | null)
+          ?.projectId;
+        if (typeof projectId !== "string" || !projectId) {
+          ack?.({ error: "Missing projectId" });
+          return;
+        }
+        try {
+          ack?.({ nodes: await listSceneNodes(projectId) });
+        } catch (err) {
+          ack?.({ error: errorMessage(err) });
+        }
+      },
+    );
+
+    socket.on("scene-node:save", async (payload: unknown) => {
+      const { projectId, node } = (payload ?? {}) as {
+        projectId?: unknown;
+        node?: unknown;
+      };
+      if (typeof projectId !== "string" || !projectId) return;
+      try {
+        const saved = await saveSceneNode(projectId, node as { id?: unknown });
+        io.to(projectRoom(projectId)).emit("scene-node:saved", { node: saved });
+      } catch (err) {
+        socket.emit("scene-node:error", { error: errorMessage(err) });
+      }
+    });
+
+    socket.on("scene-node:delete", async (payload: unknown) => {
+      const { projectId, nodeId } = (payload ?? {}) as {
+        projectId?: unknown;
+        nodeId?: unknown;
+      };
+      if (typeof projectId !== "string" || !projectId) return;
+      if (typeof nodeId !== "string" || !nodeId) return;
+      try {
+        await deleteSceneNode(projectId, nodeId);
+        io.to(projectRoom(projectId)).emit("scene-node:deleted", { nodeId });
+      } catch (err) {
+        socket.emit("scene-node:error", { error: errorMessage(err) });
       }
     });
   });

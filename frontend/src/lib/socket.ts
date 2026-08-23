@@ -1,4 +1,5 @@
 import { io, type Socket } from "socket.io-client";
+import type { SceneNode } from "../types/scene";
 
 let socket: Socket | null = null;
 
@@ -18,4 +19,27 @@ export function joinProjectRoom(projectId: string): void {
 /** Push the current design to the server (persists + broadcasts to the room). */
 export function sendDesignUpdate(projectId: string, design: unknown): void {
   getSocket().emit("design:update", { projectId, design });
+}
+
+/** Scene-node CRUD over socket.io. */
+
+export function listSceneNodes(projectId: string): Promise<SceneNode[]> {
+  return new Promise((resolve, reject) => {
+    getSocket().emit(
+      "scene-node:list",
+      { projectId },
+      (res: { nodes?: SceneNode[]; error?: string }) => {
+        if (res?.error) reject(new Error(res.error));
+        else resolve(res?.nodes ?? []);
+      },
+    );
+  });
+}
+
+export function saveSceneNode(projectId: string, node: SceneNode): void {
+  getSocket().emit("scene-node:save", { projectId, node });
+}
+
+export function deleteSceneNode(projectId: string, nodeId: string): void {
+  getSocket().emit("scene-node:delete", { projectId, nodeId });
 }
