@@ -42,8 +42,8 @@ function transformProps(node: SceneNode) {
 export function SceneElement({ node }: { node: SceneNode }) {
   const children = node.children?.map((child) => {
     return (
-      <Suspense fallback={null}>
-        <SceneElement key={child.id} node={child} />
+      <Suspense fallback={null} key={child.id}>
+        <SceneElement key={child.id + "el"} node={child} />
       </Suspense>
     );
   });
