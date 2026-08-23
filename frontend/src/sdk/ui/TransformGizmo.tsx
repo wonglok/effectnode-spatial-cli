@@ -88,7 +88,8 @@ export function TransformGizmo() {
           selectedIdsRef.current,
         )) {
           const node = findSceneNode(store.scene, id);
-          if (node) positions.set(id, readVec3(node.params?.position, [0, 0, 0]));
+          if (node)
+            positions.set(id, readVec3(node.params?.position, [0, 0, 0]));
         }
         dragStartRef.current = { pivot: pivot.position.clone(), positions };
       } else {
