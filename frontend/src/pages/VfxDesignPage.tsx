@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { CanvasArea } from "../sdk/ui/CanvasArea";
 import { FileManager } from "../components/Editor/FileManager";
@@ -6,7 +6,12 @@ import { OutlinePanel } from "../components/Editor/OutlinePanel";
 import { PropsEditor } from "../components/Editor/PropsEditor";
 import { Toolbar } from "../components/Editor/Toolbar";
 import { api } from "../lib/api";
-import { joinProjectRoom, sendDesignUpdate } from "../lib/socket";
+import {
+  deleteSceneNode,
+  joinProjectRoom,
+  saveSceneNode,
+  sendDesignUpdate,
+} from "../lib/socket";
 import { useEditorStore } from "../store/editorStore";
 import type { SceneNode } from "../sdk/types/scene";
 import { useProjectsStore } from "../store/projectsStore";
@@ -21,6 +26,7 @@ export function VfxDesignPage() {
   const scene = useEditorStore((state) => state.scene);
   const setScene = useEditorStore((state) => state.setScene);
   const [loading, setLoading] = useState(true);
+  const prevSceneRef = useRef<SceneNode[]>([]);
 
   useEffect(() => {
     setSidebarCollapsed(true);
@@ -85,6 +91,27 @@ export function VfxDesignPage() {
     return () => {
       clearTimeout(timer);
     };
+  }, [project, scene, loading]);
+
+  // Sync each scene node to the per-node store (json/scene-nodes/*.js) and
+  // broadcast the individual node changes so other clients (vfx-preview) stay
+  // in step with the editor.
+  useEffect(() => {
+    if (!project || loading) return;
+    const timer = setTimeout(() => {
+      const prev = prevSceneRef.current;
+      const prevIds = new Set(prev.map((n) => n.id));
+      const nextIds = new Set(scene.map((n) => n.id));
+
+      for (const id of prevIds) {
+        if (!nextIds.has(id)) deleteSceneNode(project.slug, id);
+      }
+      for (const node of scene) {
+        saveSceneNode(project.slug, node);
+      }
+      prevSceneRef.current = scene;
+    }, 500);
+    return () => clearTimeout(timer);
   }, [project, scene, loading]);
 
   if (!project) return null;

@@ -3,11 +3,13 @@ import { useParams } from "react-router-dom";
 import { CanvasArea } from "../sdk/ui/CanvasArea";
 import { api } from "../lib/api";
 import { getSocket, joinProjectRoom } from "../lib/socket";
+import { useEditorStore } from "../store/editorStore";
 import type { SceneNode } from "../sdk/types/scene";
 
 export function VfxPreviewPage() {
   const { projectID } = useParams();
-  const [scene, setScene] = useState<SceneNode[]>([]);
+  const scene = useEditorStore((state) => state.scene);
+  const setScene = useEditorStore((state) => state.setScene);
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
@@ -46,7 +48,7 @@ export function VfxPreviewPage() {
       socket.off("disconnect", onDisconnect);
       socket.off("design:updated", onDesignUpdated);
     };
-  }, [projectID]);
+  }, [projectID, setScene]);
 
   return (
     <div className="flex h-screen relative flex-col bg-white">
