@@ -49,16 +49,16 @@ export function VfxPreviewPage() {
   }, [projectID]);
 
   return (
-    <div className="flex h-screen flex-col bg-white">
-      <header className="flex items-center justify-between px-4 py-3 text-sm text-white">
+    <div className="flex h-screen relative flex-col bg-white">
+      <div className="w-full h-full">
+        <CanvasArea scene={scene} />
+      </div>
+      <header className="flex items-center justify-between px-4 py-3 text-sm text-white absolute top-0 right-0">
         <span className="font-medium">Preview</span>
         <span className={connected ? "text-tiffany-400" : "text-ink-500"}>
           {connected ? "● Live" : "○ Offline"}
         </span>
       </header>
-      <div className="min-h-0 flex-1">
-        <CanvasArea scene={scene} />
-      </div>
     </div>
   );
 }

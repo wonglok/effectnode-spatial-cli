@@ -8,6 +8,7 @@ const DEFAULT_NAMES: Record<SceneNodeType, string> = {
   material: "Material",
   light: "Light",
   model: "Model",
+  environment: "Environment",
 };
 
 const INITIAL_SCENE: SceneNode[] = [];

@@ -80,10 +80,23 @@ export function PlacementController() {
     const onDrop = (e: DragEvent) => {
       e.preventDefault();
       const src = e.dataTransfer?.getData(ASSET_MIME);
-      const position = toPoint(e);
-      if (src && position) {
-        const name = src.split("/").pop() || "Model";
-        addNode("model", { src, position }, name);
+      if (!src) {
+        setHover(null);
+        return;
+      }
+      const name = src.split("/").pop() || "Asset";
+      const ext = src.split(".").pop()?.toLowerCase();
+
+      if (ext === "hdr") {
+        // Environment map — global lighting, no world position needed.
+        addNode(
+          "environment",
+          { src, environmentIntensity: 1, backgroundIntensity: 1 },
+          name,
+        );
+      } else {
+        const position = toPoint(e);
+        if (position) addNode("model", { src, position }, name);
       }
       setHover(null);
     };

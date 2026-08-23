@@ -101,6 +101,65 @@ function MaterialParamsSection({ node }: { node: SceneNode }) {
   );
 }
 
+function EnvironmentParamsSection({ node }: { node: SceneNode }) {
+  const updateNodeParams = useEditorStore((state) => state.updateNodeParams);
+  const params = node.params ?? {};
+  const environmentIntensity =
+    typeof params.environmentIntensity === "number"
+      ? params.environmentIntensity
+      : 1;
+  const backgroundIntensity =
+    typeof params.backgroundIntensity === "number"
+      ? params.backgroundIntensity
+      : 1;
+
+  return (
+    <section className="space-y-4">
+      <h3 className="text-xs font-semibold text-ink-500">Environment</h3>
+
+      <label className="block">
+        <span className="flex items-center justify-between text-[11px] font-medium text-ink-500">
+          <span>Environment Intensity</span>
+          <span className="text-ink-400">{environmentIntensity.toFixed(2)}</span>
+        </span>
+        <input
+          type="range"
+          min={0}
+          max={4}
+          step={0.01}
+          value={environmentIntensity}
+          onChange={(e) =>
+            updateNodeParams(node.id, {
+              environmentIntensity: Number(e.target.value),
+            })
+          }
+          className="mt-1.5 w-full accent-tiffany-600"
+        />
+      </label>
+
+      <label className="block">
+        <span className="flex items-center justify-between text-[11px] font-medium text-ink-500">
+          <span>Background Intensity</span>
+          <span className="text-ink-400">{backgroundIntensity.toFixed(2)}</span>
+        </span>
+        <input
+          type="range"
+          min={0}
+          max={4}
+          step={0.01}
+          value={backgroundIntensity}
+          onChange={(e) =>
+            updateNodeParams(node.id, {
+              backgroundIntensity: Number(e.target.value),
+            })
+          }
+          className="mt-1.5 w-full accent-tiffany-600"
+        />
+      </label>
+    </section>
+  );
+}
+
 export function PropsEditor() {
   const scene = useEditorStore((state) => state.scene);
   const selectedId = useEditorStore((state) => state.selectedId);
@@ -136,6 +195,10 @@ export function PropsEditor() {
           )}
 
           {node.type === "material" && <MaterialParamsSection node={node} />}
+
+          {node.type === "environment" && (
+            <EnvironmentParamsSection node={node} />
+          )}
         </div>
       ) : (
         <p className="p-4 text-sm text-ink-500">No object selected</p>

@@ -4,7 +4,8 @@ export type SceneNodeType =
   | "geometry"
   | "material"
   | "light"
-  | "model";
+  | "model"
+  | "environment";
 
 export interface SceneNode {
   id: string;

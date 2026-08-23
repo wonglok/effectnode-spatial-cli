@@ -1,4 +1,5 @@
 import type { SceneNode } from "../../types/scene";
+import { EnvironmentNode } from "./EnvironmentNode";
 import { ModelNode } from "./ModelNode";
 
 /** Recursively renders a scene-graph node (group/mesh/geometry/material/light/model). */
@@ -38,6 +39,25 @@ export function SceneElement({ node }: { node: SceneNode }) {
           ? (position as [number, number, number])
           : undefined;
       return <ModelNode src={src} position={pos} />;
+    }
+    case "environment": {
+      const src = node.params?.src;
+      if (typeof src !== "string") return null;
+      const environmentIntensity =
+        typeof node.params?.environmentIntensity === "number"
+          ? node.params.environmentIntensity
+          : 1;
+      const backgroundIntensity =
+        typeof node.params?.backgroundIntensity === "number"
+          ? node.params.backgroundIntensity
+          : 1;
+      return (
+        <EnvironmentNode
+          src={src}
+          environmentIntensity={environmentIntensity}
+          backgroundIntensity={backgroundIntensity}
+        />
+      );
     }
     case "light":
       return <ambientLight />;
