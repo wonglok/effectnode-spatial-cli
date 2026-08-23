@@ -17,9 +17,14 @@ export const WebGPUCanvas = ({ children }: { children?: ReactNode }) => {
       gl={async (props) => {
         const renderer = new THREE.WebGPURenderer({
           ...(props as any),
+          stencil: false,
+          requiredLimits: {
+            maxColorAttachmentBytesPerSample: 64,
+          },
         });
         await renderer.init();
         setOK(true);
+
         return renderer;
       }}
     >

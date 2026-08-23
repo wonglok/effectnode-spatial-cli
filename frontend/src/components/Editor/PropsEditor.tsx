@@ -143,10 +143,40 @@ function EnvironmentParamsSection({ node }: { node: SceneNode }) {
     typeof params.backgroundIntensity === "number"
       ? params.backgroundIntensity
       : 1;
+  const useEnvironment = params.useEnvironment !== false;
+  const useBackground = params.useBackground !== false;
 
   return (
     <section className="space-y-4">
       <h3 className="text-xs font-semibold text-ink-500">Environment</h3>
+
+      <label className="flex items-center justify-between">
+        <span className="text-[11px] font-medium text-ink-500">
+          Use as Environment
+        </span>
+        <input
+          type="checkbox"
+          checked={useEnvironment}
+          onChange={(e) =>
+            updateNodeParams(node.id, { useEnvironment: e.target.checked })
+          }
+          className="h-4 w-4 accent-tiffany-600"
+        />
+      </label>
+
+      <label className="flex items-center justify-between">
+        <span className="text-[11px] font-medium text-ink-500">
+          Use as Background
+        </span>
+        <input
+          type="checkbox"
+          checked={useBackground}
+          onChange={(e) =>
+            updateNodeParams(node.id, { useBackground: e.target.checked })
+          }
+          className="h-4 w-4 accent-tiffany-600"
+        />
+      </label>
 
       <label className="block">
         <span className="flex items-center justify-between text-[11px] font-medium text-ink-500">

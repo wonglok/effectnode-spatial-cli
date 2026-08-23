@@ -12,26 +12,42 @@ export function EnvironmentNode({
   src,
   environmentIntensity = 1,
   backgroundIntensity = 1,
+  useEnvironment = true,
+  useBackground = true,
 }: {
   src: string;
   environmentIntensity?: number;
   backgroundIntensity?: number;
+  useEnvironment?: boolean;
+  useBackground?: boolean;
 }) {
   const scene = useThree((state) => state.scene);
   const texture = useLoader(RGBELoader, src);
 
   useEffect(() => {
     texture.mapping = THREE.EquirectangularReflectionMapping;
-    scene.environment = texture;
-    scene.background = texture;
-    scene.environmentIntensity = environmentIntensity;
-    scene.backgroundIntensity = backgroundIntensity;
+
+    if (useEnvironment) {
+      scene.environment = texture;
+      scene.environmentIntensity = environmentIntensity;
+    }
+    if (useBackground) {
+      scene.background = texture;
+      scene.backgroundIntensity = backgroundIntensity;
+    }
 
     return () => {
       if (scene.environment === texture) scene.environment = null;
       if (scene.background === texture) scene.background = null;
     };
-  }, [scene, texture, environmentIntensity, backgroundIntensity]);
+  }, [
+    scene,
+    texture,
+    environmentIntensity,
+    backgroundIntensity,
+    useEnvironment,
+    useBackground,
+  ]);
 
   return null;
 }

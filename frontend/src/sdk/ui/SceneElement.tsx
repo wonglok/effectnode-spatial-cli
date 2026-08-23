@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { SceneNode } from "../types/scene";
 import { readVec3 } from "../types/vec3";
 import { EnvironmentNode } from "./EnvironmentNode";
@@ -39,9 +40,13 @@ function transformProps(node: SceneNode) {
 
 /** Recursively renders a scene-graph node. */
 export function SceneElement({ node }: { node: SceneNode }) {
-  const children = node.children?.map((child) => (
-    <SceneElement key={child.id} node={child} />
-  ));
+  const children = node.children?.map((child) => {
+    return (
+      <Suspense fallback={null}>
+        <SceneElement key={child.id} node={child} />
+      </Suspense>
+    );
+  });
 
   switch (node.type) {
     case "group":
@@ -87,12 +92,16 @@ export function SceneElement({ node }: { node: SceneNode }) {
         typeof node.params?.backgroundIntensity === "number"
           ? node.params.backgroundIntensity
           : 1;
+      const useEnvironment = node.params?.useEnvironment !== false;
+      const useBackground = node.params?.useBackground !== false;
 
       return (
         <EnvironmentNode
           src={src}
           environmentIntensity={environmentIntensity}
           backgroundIntensity={backgroundIntensity}
+          useEnvironment={useEnvironment}
+          useBackground={useBackground}
         />
       );
     }

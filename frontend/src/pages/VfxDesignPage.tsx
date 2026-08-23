@@ -59,12 +59,16 @@ export function VfxDesignPage() {
   }, [project, setScene]);
 
   useEffect(() => {
-    if (project) joinProjectRoom(project.slug);
+    if (project) {
+      joinProjectRoom(project.slug);
+    }
   }, [project]);
 
   // Broadcast every scene change (after the initial load) to the room.
   useEffect(() => {
-    if (project && !loading) sendDesignUpdate(project.slug, { scene });
+    if (project && !loading) {
+      sendDesignUpdate(project.slug, { scene });
+    }
   }, [project, scene, loading]);
 
   // Auto-save the design (debounced) after any scene change — including when a

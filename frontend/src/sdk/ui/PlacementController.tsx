@@ -91,7 +91,13 @@ export function PlacementController() {
         // Environment map — global lighting, no world position needed.
         addNode(
           "environment",
-          { src, environmentIntensity: 1, backgroundIntensity: 1 },
+          {
+            src,
+            environmentIntensity: 1,
+            backgroundIntensity: 1,
+            useEnvironment: true,
+            useBackground: true,
+          },
           name,
         );
       } else {

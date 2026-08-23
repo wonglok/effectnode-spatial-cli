@@ -14,11 +14,13 @@ export function CanvasArea({
 }) {
   return (
     <WebGPUCanvas>
-      <Suspense fallback={null}>
-        {scene.map((node) => (
-          <SceneElement key={node.id} node={node} />
-        ))}
-      </Suspense>
+      {scene.map((node) => {
+        return (
+          <Suspense fallback={null}>
+            <SceneElement key={node.id} node={node} />
+          </Suspense>
+        );
+      })}
 
       {editable && <OrbitControls makeDefault enableDamping />}
       {editable && <gridHelper args={[100, 100, 0x777777, 0xbababa]} />}
@@ -26,9 +28,3 @@ export function CanvasArea({
     </WebGPUCanvas>
   );
 }
-
-//
-
-//
-
-//
