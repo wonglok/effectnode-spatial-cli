@@ -33,7 +33,9 @@ function transformProps(node: SceneNode) {
       }
     }
   }
-  if (p.isCollider === true) userData.isCollider = true;
+  if (p.isCollider === true) {
+    userData.isCollider = true;
+  }
 
   return { position, rotation, scale, userData };
 }
