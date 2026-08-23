@@ -78,13 +78,15 @@ export function VfxDesignPage() {
           // Backend unreachable; the next scene change will retry.
         });
     }, 500);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+    };
   }, [project, scene, loading]);
 
   if (!project) return null;
 
   return (
-    <div className="flex h-full min-h-[560px] overflow-hidden">
+    <div className="flex h-full w-full overflow-hidden">
       <OutlinePanel />
 
       <div className="flex min-w-0 flex-1 flex-col">

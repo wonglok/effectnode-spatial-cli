@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../lib/api";
-import { IconFolder, IconSearch } from "../icons";
+import { IconEdit, IconFolder, IconSearch, IconTrash } from "../icons";
 
 const ASSET_MIME = "application/x-enfx-asset";
 
@@ -13,6 +13,8 @@ export function FileManager({ projectId }: { projectId: string }) {
   const [query, setQuery] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const refresh = useCallback(async () => {
@@ -55,6 +57,41 @@ export function FileManager({ projectId }: { projectId: string }) {
     if (!q) return files;
     return files.filter((file) => file.name.toLowerCase().includes(q));
   }, [files, query]);
+
+  const startRename = (name: string) => {
+    setEditing(name);
+    setEditValue(name);
+  };
+
+  const commitRename = () => {
+    const oldName = editing;
+    const newName = editValue.trim();
+    setEditing(null);
+    if (oldName && newName && newName !== oldName) {
+      api
+        .patch(
+          `/projects/${encodeURIComponent(projectId)}/uploads/${encodeURIComponent(oldName)}`,
+          { name: newName },
+        )
+        .then(refresh)
+        .catch(() => {
+          // Rename failed; the list keeps the original name.
+        });
+    }
+  };
+
+  const cancelRename = () => setEditing(null);
+
+  const remove = (name: string) => {
+    api
+      .remove(
+        `/projects/${encodeURIComponent(projectId)}/uploads/${encodeURIComponent(name)}`,
+      )
+      .then(refresh)
+      .catch(() => {
+        // Delete failed; leave the list as-is.
+      });
+  };
 
   return (
     <div
@@ -115,18 +152,61 @@ export function FileManager({ projectId }: { projectId: string }) {
             {filtered.map((file) => (
               <li
                 key={file.name}
-                draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.setData(ASSET_MIME, assetUrl(file.name));
-                  e.dataTransfer.setData("text/plain", assetUrl(file.name));
-                  e.dataTransfer.effectAllowed = "copy";
-                }}
-                className="flex cursor-grab items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-ink-50 active:cursor-grabbing"
+                draggable={editing !== file.name}
+                onDragStart={
+                  editing === file.name
+                    ? undefined
+                    : (e) => {
+                        e.dataTransfer.setData(ASSET_MIME, assetUrl(file.name));
+                        e.dataTransfer.setData(
+                          "text/plain",
+                          assetUrl(file.name),
+                        );
+                        e.dataTransfer.effectAllowed = "copy";
+                      }
+                }
+                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-ink-50"
               >
-                <IconFolder className="h-4 w-4 shrink-0 text-tiffany-600" />
-                <span className="min-w-0 flex-1 truncate text-ink-700">
-                  {file.name}
-                </span>
+                {editing === file.name ? (
+                  <input
+                    autoFocus
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onBlur={cancelRename}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") commitRename();
+                      else if (e.key === "Escape") cancelRename();
+                    }}
+                    className="w-full rounded border border-tiffany-400 px-1.5 py-0.5 text-sm text-ink-800 outline-none ring-2 ring-tiffany-300/40"
+                  />
+                ) : (
+                  <>
+                    <IconFolder className="h-4 w-4 shrink-0 text-tiffany-600" />
+                    <span className="min-w-0 flex-1 truncate text-ink-700">
+                      {file.name}
+                    </span>
+                    <div className="flex shrink-0 items-center gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => startRename(file.name)}
+                        aria-label={`Rename ${file.name}`}
+                        title="Rename"
+                        className="rounded p-1 text-ink-300 transition hover:bg-ink-100 hover:text-ink-700"
+                      >
+                        <IconEdit className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => remove(file.name)}
+                        aria-label={`Delete ${file.name}`}
+                        title="Delete"
+                        className="rounded p-1 text-ink-300 transition hover:bg-red-50 hover:text-red-600"
+                      >
+                        <IconTrash className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </>
+                )}
               </li>
             ))}
           </ul>

@@ -424,3 +424,41 @@ projectsRouter.get("/:projectID/uploads/:filename", async (req, res) => {
   }
   res.sendFile(filepath);
 });
+
+// PATCH /api/projects/:projectID/uploads/:filename — rename an uploaded file.
+projectsRouter.patch("/:projectID/uploads/:filename", async (req, res) => {
+  const project = await resolveProject(req.params.projectID);
+  if (!project) {
+    res.status(404).json({ error: "Project not found" });
+    return;
+  }
+  const oldName = sanitizeFilename(req.params.filename);
+  const rawName = String((req.body as { name?: unknown })?.name ?? "").trim();
+  if (!rawName) {
+    res.status(400).json({ error: "A new name is required" });
+    return;
+  }
+  const newName = sanitizeFilename(rawName);
+  const dir = path.join(PROJECTS_ROOT, project.id, "uploads");
+  try {
+    await fs.rename(path.join(dir, oldName), path.join(dir, newName));
+  } catch {
+    res.status(404).json({ error: "File not found" });
+    return;
+  }
+  res.json({ name: newName });
+});
+
+// DELETE /api/projects/:projectID/uploads/:filename — delete an uploaded file.
+projectsRouter.delete("/:projectID/uploads/:filename", async (req, res) => {
+  const project = await resolveProject(req.params.projectID);
+  if (!project) {
+    res.status(404).json({ error: "Project not found" });
+    return;
+  }
+  const filename = sanitizeFilename(req.params.filename);
+  await fs.rm(path.join(PROJECTS_ROOT, project.id, "uploads", filename), {
+    force: true,
+  });
+  res.status(204).end();
+});

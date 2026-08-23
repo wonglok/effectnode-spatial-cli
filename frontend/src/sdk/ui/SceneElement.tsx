@@ -30,6 +30,7 @@ export function SceneElement({ node }: { node: SceneNode }) {
         />
       );
     }
+
     case "model": {
       const src = node.params?.src;
       const position = node.params?.position;
@@ -40,6 +41,7 @@ export function SceneElement({ node }: { node: SceneNode }) {
           : undefined;
       return <ModelNode src={src} position={pos} />;
     }
+
     case "environment": {
       const src = node.params?.src;
       if (typeof src !== "string") return null;
