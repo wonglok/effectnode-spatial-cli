@@ -13,8 +13,21 @@ function SceneElement({ node }: { node: SceneNode }) {
       return <mesh>{children}</mesh>;
     case "geometry":
       return <boxGeometry />;
-    case "material":
-      return <meshStandardMaterial />;
+    case "material": {
+      const params = node.params ?? {};
+      const color = typeof params.color === "string" ? params.color : "#ffffff";
+      const roughness =
+        typeof params.roughness === "number" ? params.roughness : 0.5;
+      const metalness =
+        typeof params.metalness === "number" ? params.metalness : 0;
+      return (
+        <meshStandardMaterial
+          color={color}
+          roughness={roughness}
+          metalness={metalness}
+        />
+      );
+    }
     case "light":
       return <ambientLight />;
     default:

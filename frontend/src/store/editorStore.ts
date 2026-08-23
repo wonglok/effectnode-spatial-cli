@@ -1,11 +1,17 @@
 import { create } from "zustand";
 
-export type SceneNodeType = "group" | "mesh" | "geometry" | "material" | "light";
+export type SceneNodeType =
+  | "group"
+  | "mesh"
+  | "geometry"
+  | "material"
+  | "light";
 
 export interface SceneNode {
   id: string;
   name: string;
   type: SceneNodeType;
+  params?: Record<string, unknown>;
   children?: SceneNode[];
 }
 
@@ -24,7 +30,12 @@ const INITIAL_SCENE: SceneNode[] = [
     type: "mesh",
     children: [
       { id: "box-geometry", name: "BoxGeometry", type: "geometry" },
-      { id: "box-material", name: "StandardMaterial", type: "material" },
+      {
+        id: "box-material",
+        name: "StandardMaterial",
+        type: "material",
+        params: { color: "#81d8d0", roughness: 0.4, metalness: 0.1 },
+      },
     ],
   },
   { id: "ambient-light", name: "Ambient Light", type: "light" },
@@ -35,9 +46,7 @@ function removeRecursive(nodes: SceneNode[], id: string): SceneNode[] {
     .filter((node) => node.id !== id)
     .map((node) => ({
       ...node,
-      children: node.children
-        ? removeRecursive(node.children, id)
-        : undefined,
+      children: node.children ? removeRecursive(node.children, id) : undefined,
     }));
 }
 
@@ -53,6 +62,23 @@ function renameRecursive(
           ...node,
           children: node.children
             ? renameRecursive(node.children, id, name)
+            : undefined,
+        },
+  );
+}
+
+function updateParamsRecursive(
+  nodes: SceneNode[],
+  id: string,
+  params: Record<string, unknown>,
+): SceneNode[] {
+  return nodes.map((node) =>
+    node.id === id
+      ? { ...node, params: { ...node.params, ...params } }
+      : {
+          ...node,
+          children: node.children
+            ? updateParamsRecursive(node.children, id, params)
             : undefined,
         },
   );
@@ -80,6 +106,7 @@ interface EditorState {
   addNode: (type: SceneNodeType) => void;
   removeNode: (id: string) => void;
   renameNode: (id: string, name: string) => void;
+  updateNodeParams: (id: string, params: Record<string, unknown>) => void;
 }
 
 export const useEditorStore = create<EditorState>()((set) => ({
@@ -104,6 +131,11 @@ export const useEditorStore = create<EditorState>()((set) => ({
 
   renameNode: (id, name) =>
     set((state) => ({ scene: renameRecursive(state.scene, id, name) })),
+
+  updateNodeParams: (id, params) =>
+    set((state) => ({
+      scene: updateParamsRecursive(state.scene, id, params),
+    })),
 }));
 
 export function findSceneNode(

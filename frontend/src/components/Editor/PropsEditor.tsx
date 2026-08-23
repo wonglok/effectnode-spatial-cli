@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { findSceneNode, useEditorStore } from "../../store/editorStore";
+import type { SceneNode } from "../../store/editorStore";
 
 interface NumberFieldProps {
   label: string;
@@ -38,6 +39,68 @@ function TransformSection() {
   );
 }
 
+function MaterialParamsSection({ node }: { node: SceneNode }) {
+  const updateNodeParams = useEditorStore((state) => state.updateNodeParams);
+  const params = node.params ?? {};
+  const color = typeof params.color === "string" ? params.color : "#ffffff";
+  const roughness =
+    typeof params.roughness === "number" ? params.roughness : 0.5;
+  const metalness =
+    typeof params.metalness === "number" ? params.metalness : 0;
+
+  return (
+    <section className="space-y-4">
+      <h3 className="text-xs font-semibold text-ink-500">Material</h3>
+
+      <label className="flex items-center justify-between">
+        <span className="text-[11px] font-medium text-ink-500">Color</span>
+        <input
+          type="color"
+          value={color}
+          onChange={(e) => updateNodeParams(node.id, { color: e.target.value })}
+          className="h-8 w-11 cursor-pointer rounded-md border border-ink-200 bg-white p-0.5"
+        />
+      </label>
+
+      <label className="block">
+        <span className="flex items-center justify-between text-[11px] font-medium text-ink-500">
+          <span>Roughness</span>
+          <span className="text-ink-400">{roughness.toFixed(2)}</span>
+        </span>
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.01}
+          value={roughness}
+          onChange={(e) =>
+            updateNodeParams(node.id, { roughness: Number(e.target.value) })
+          }
+          className="mt-1.5 w-full accent-tiffany-600"
+        />
+      </label>
+
+      <label className="block">
+        <span className="flex items-center justify-between text-[11px] font-medium text-ink-500">
+          <span>Metalness</span>
+          <span className="text-ink-400">{metalness.toFixed(2)}</span>
+        </span>
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.01}
+          value={metalness}
+          onChange={(e) =>
+            updateNodeParams(node.id, { metalness: Number(e.target.value) })
+          }
+          className="mt-1.5 w-full accent-tiffany-600"
+        />
+      </label>
+    </section>
+  );
+}
+
 export function PropsEditor() {
   const scene = useEditorStore((state) => state.scene);
   const selectedId = useEditorStore((state) => state.selectedId);
@@ -71,6 +134,8 @@ export function PropsEditor() {
           {(node.type === "mesh" || node.type === "geometry") && (
             <TransformSection />
           )}
+
+          {node.type === "material" && <MaterialParamsSection node={node} />}
         </div>
       ) : (
         <p className="p-4 text-sm text-ink-500">No object selected</p>

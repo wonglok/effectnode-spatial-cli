@@ -38,7 +38,7 @@ export function VfxDesignPage() {
   if (!project) return null;
 
   return (
-    <div className="flex h-full min-h-[560px] overflow-hidden rounded-xl border border-ink-200 bg-white">
+    <div className="flex h-full min-h-[560px] overflow-hidden bg-white">
       <OutlinePanel />
 
       <div className="flex min-w-0 flex-1 flex-col">

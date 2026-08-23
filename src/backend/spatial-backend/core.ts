@@ -94,7 +94,10 @@ export async function runSetup({
 
   const server = createServer(app);
   const io = new Server(server, {
-    cors: { origin: true, credentials: true },
+    // Local single-user tool: the browser reaches the backend same-origin via
+    // the Vite proxy, so no credentials are ever sent. `origin: true` reflects
+    // the request origin to allow LAN access for the mobile /vfx-preview view.
+    cors: { origin: true },
   });
   setupRealtime(io);
 
