@@ -4,7 +4,7 @@ import { createBackendServer } from "./index.js";
 // separate process (see vite.config.ts), so nodemon can restart this on
 // backend edits without disturbing the browser's HMR connection.
 
-const port = Number(process.env.BACKEND_PORT ?? 4000);
+const port = Number(process.env.BACKEND_PORT ?? 5201);
 
 async function main(): Promise<void> {
   //

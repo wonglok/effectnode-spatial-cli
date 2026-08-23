@@ -50,7 +50,7 @@ const APP_DATA_DIR = join(homedir(), "spatial-studio");
 const PYTHON_DIR = join(APP_DATA_DIR, "python-src");
 const PROJECTS_DIR = join(APP_DATA_DIR, "projects");
 const JSON_DIR = join(APP_DATA_DIR, "json");
-const BACKEND_PORT_START = 4000;
+const BACKEND_PORT_START = 5201;
 let BACKEND_PORT = BACKEND_PORT_START;
 
 //
@@ -89,7 +89,7 @@ let setupState: SetupState = {
 };
 
 export async function runSetup({
-  port = 4000,
+  port = 5201,
 }: {
   port: number;
 }): Promise<any> {

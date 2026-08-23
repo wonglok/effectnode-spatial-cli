@@ -11,15 +11,15 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     host: "localhost",
-    port: 5177,
+    port: 5288,
     strictPort: true,
     proxy: {
       "/api": {
-        target: "http://localhost:4000",
+        target: "http://localhost:5201",
         changeOrigin: true,
       },
       "/ws": {
-        target: "ws://localhost:4000",
+        target: "ws://localhost:5201",
         ws: true,
       },
     },

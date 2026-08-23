@@ -25,8 +25,8 @@ program
   )
   .version("0.1.0")
   .option("--host <host>", "Host to bind", "localhost")
-  .option("--frontend-port <port>", "Frontend (Vite) port", "5177")
-  .option("--backend-port <port>", "Backend (Express) port", "4000")
+  .option("--frontend-port <port>", "Frontend (Vite) port", "5288")
+  .option("--backend-port <port>", "Backend (Express) port", "5201")
   .option("--no-open", "Do not open the browser")
   .action(async (options) => {
     const host: string = options.host;
