@@ -7,14 +7,9 @@ interface UiState {
   setSidebarCollapsed: (collapsed: boolean) => void;
 }
 
-export const useUiStore = create<UiState>()(
-  persist(
-    (set) => ({
-      sidebarCollapsed: false,
-      toggleSidebar: () =>
-        set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
-      setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
-    }),
-    { name: "effectnode-ui" },
-  ),
-);
+export const useUiStore = create<UiState>((set) => ({
+  sidebarCollapsed: false,
+  toggleSidebar: () =>
+    set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+  setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+}));

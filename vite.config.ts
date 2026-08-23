@@ -10,7 +10,8 @@ export default defineConfig({
   root: "frontend",
   plugins: [react(), tailwindcss()],
   server: {
-    host: "localhost",
+    host: "0.0.0.0",
+    allowedHosts: true,
     port: 5288,
     strictPort: true,
     proxy: {

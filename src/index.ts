@@ -24,7 +24,7 @@ program
       "and an Express backend (REST + WebSocket) — then open the browser.",
   )
   .version("0.1.0")
-  .option("--host <host>", "Host to bind", "localhost")
+  // .option("--host <host>", "Host to bind", "localhost")
   .option("--frontend-port <port>", "Frontend (Vite) port", "5288")
   .option("--backend-port <port>", "Backend (Express) port", "5201")
   .option("--no-open", "Do not open the browser")
@@ -45,7 +45,9 @@ program
         PORT: backendPort,
       },
       server: {
-        host,
+        host: "0.0.0.0",
+        allowedHosts: true,
+        // host,
         port: frontendPort,
         strictPort: true,
         proxy: {

@@ -9,12 +9,12 @@ export function VfxDesignPage() {
   const project = useProjectsStore((state) =>
     state.projects.find((p) => p.slug === projectID),
   );
-  const toggleSidebar = useUiStore((state) => state.toggleSidebar);
+  const setSidebarCollapsed = useUiStore((state) => state.setSidebarCollapsed);
 
   useEffect(() => {
-    toggleSidebar();
+    setSidebarCollapsed(true);
     return () => {
-      toggleSidebar();
+      setSidebarCollapsed(false);
     };
   }, []);
 
