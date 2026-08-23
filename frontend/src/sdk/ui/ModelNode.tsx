@@ -2,18 +2,11 @@ import { useGLTF } from "@react-three/drei";
 import { useEffect, useMemo, useState } from "react";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 
-/** Loads and renders a GLTF/GLB model at an optional world position. */
-export function ModelNode({
-  src,
-  position,
-}: {
-  src: string;
-  position?: [number, number, number];
-}) {
-  let [realURL, setURL] = useState("");
+/** Loads and renders a GLTF/GLB model (transform applied by the parent group). */
+export function ModelNode({ src }: { src: string }) {
+  const [realURL, setURL] = useState("");
 
   useEffect(() => {
-    //
     fetch(src)
       .then((r) => {
         if (!r.ok) {
@@ -25,34 +18,19 @@ export function ModelNode({
         setURL(URL.createObjectURL(blob));
       })
       .catch((err) => {
-        //
         console.log(err);
       });
-    //
   }, [src]);
-  return (
-    <>
-      {realURL && <AcutalNode src={realURL} position={position}></AcutalNode>}
-    </>
-  );
+
+  return <>{realURL && <AcutalNode src={realURL} />}</>;
 }
 
-function AcutalNode({
-  position,
-  src,
-}: {
-  src: string;
-  position?: [number, number, number];
-}) {
+function AcutalNode({ src }: { src: string }) {
   const { scene } = useGLTF(src);
 
   const { clonedScene } = useMemo(() => {
     return { clonedScene: clone(scene) };
   }, [scene]);
 
-  return (
-    <group>
-      <primitive object={clonedScene} position={position} />;
-    </group>
-  );
+  return <primitive object={clonedScene} />;
 }

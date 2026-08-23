@@ -1,8 +1,43 @@
 import type { SceneNode } from "../../types/scene";
+import { readVec3 } from "../../lib/vec3";
 import { EnvironmentNode } from "./EnvironmentNode";
 import { ModelNode } from "./ModelNode";
 
-/** Recursively renders a scene-graph node (group/mesh/geometry/material/light/model). */
+/** Build position/rotation/scale/userData props from a node's params. */
+function transformProps(node: SceneNode) {
+  const p = node.params ?? {};
+  const position = readVec3(p.position, [0, 0, 0]);
+
+  // Rotation is authored in degrees and converted to radians for three.js.
+  const rotationDeg = readVec3(p.rotation, [0, 0, 0]);
+  const rotation: [number, number, number] = [
+    (rotationDeg[0] * Math.PI) / 180,
+    (rotationDeg[1] * Math.PI) / 180,
+    (rotationDeg[2] * Math.PI) / 180,
+  ];
+
+  const scale = readVec3(p.scale, [1, 1, 1]);
+
+  const userData: Record<string, unknown> = {};
+  if (Array.isArray(p.userData)) {
+    for (const entry of p.userData) {
+      if (
+        entry &&
+        typeof entry === "object" &&
+        typeof (entry as { key?: unknown }).key === "string"
+      ) {
+        userData[(entry as { key: string }).key] = (
+          entry as { value?: unknown }
+        ).value;
+      }
+    }
+  }
+  if (p.isCollider === true) userData.isCollider = true;
+
+  return { position, rotation, scale, userData };
+}
+
+/** Recursively renders a scene-graph node. */
 export function SceneElement({ node }: { node: SceneNode }) {
   const children = node.children?.map((child) => (
     <SceneElement key={child.id} node={child} />
@@ -10,9 +45,9 @@ export function SceneElement({ node }: { node: SceneNode }) {
 
   switch (node.type) {
     case "group":
-      return <group>{children}</group>;
+      return <group {...transformProps(node)}>{children}</group>;
     case "mesh":
-      return <mesh>{children}</mesh>;
+      return <mesh {...transformProps(node)}>{children}</mesh>;
     case "geometry":
       return <boxGeometry />;
     case "material": {
@@ -30,18 +65,15 @@ export function SceneElement({ node }: { node: SceneNode }) {
         />
       );
     }
-
     case "model": {
       const src = node.params?.src;
-      const position = node.params?.position;
       if (typeof src !== "string") return null;
-      const pos =
-        Array.isArray(position) && position.length === 3
-          ? (position as [number, number, number])
-          : undefined;
-      return <ModelNode src={src} position={pos} />;
+      return (
+        <group {...transformProps(node)}>
+          <ModelNode src={src} />
+        </group>
+      );
     }
-
     case "environment": {
       const src = node.params?.src;
       if (typeof src !== "string") return null;
@@ -62,7 +94,7 @@ export function SceneElement({ node }: { node: SceneNode }) {
       );
     }
     case "light":
-      return <ambientLight />;
+      return <ambientLight {...transformProps(node)} />;
     default:
       return null;
   }
