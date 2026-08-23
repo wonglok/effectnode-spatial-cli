@@ -3,14 +3,35 @@ import * as THREE from "three/webgpu";
 import { useThree } from "@react-three/fiber";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { findSceneNode, useEditorStore } from "../../store/editorStore";
+import type { SceneNode } from "../types/scene";
 import { readVec3 } from "../types/vec3";
+
+/** Selected node ids that have no selected ancestor (avoids double-moving children). */
+function topLevelSelectedIds(scene: SceneNode[], ids: string[]): string[] {
+  const selected = new Set(ids);
+  const result: string[] = [];
+
+  const walk = (nodes: SceneNode[], hasSelectedAncestor: boolean) => {
+    for (const node of nodes) {
+      const isSelected = selected.has(node.id);
+      if (isSelected && !hasSelectedAncestor) result.push(node.id);
+      if (node.children) {
+        walk(node.children, hasSelectedAncestor || isSelected);
+      }
+    }
+  };
+
+  walk(scene, false);
+  return result;
+}
 
 /**
  * A translate gizmo for the current multi-selection. A hidden pivot Object3D is
- * centered at the selection's centroid and driven by three's TransformControls;
- * each `objectChange` delta is applied to every selected node's position.
- * While the gizmo is being dragged, OrbitControls is disabled so the camera
- * doesn't fight the gizmo.
+ * centered at the selection's centroid and driven by three's TransformControls.
+ * Node positions are captured once when the drag begins; on each objectChange
+ * the gizmo's total displacement is applied to the top-level selected nodes, so
+ * every node moves exactly with the gizmo (no compounding). OrbitControls is
+ * suspended while dragging.
  */
 export function TransformGizmo() {
   const { camera, gl, scene } = useThree();
@@ -27,7 +48,10 @@ export function TransformGizmo() {
 
   const pivotRef = useRef<THREE.Object3D | null>(null);
   const helperRef = useRef<THREE.Object3D | null>(null);
-  const lastPos = useRef(new THREE.Vector3());
+  const dragStartRef = useRef<{
+    pivot: THREE.Vector3;
+    positions: Map<string, [number, number, number]>;
+  } | null>(null);
 
   // Create the pivot + controls once, attached to the R3F scene.
   useEffect(() => {
@@ -45,22 +69,6 @@ export function TransformGizmo() {
     scene.add(helper);
     helperRef.current = helper;
 
-    const onObjectChange = () => {
-      const delta = pivot.position.clone().sub(lastPos.current);
-      if (delta.lengthSq() < 1e-12) return;
-
-      const store = useEditorStore.getState();
-      for (const id of selectedIdsRef.current) {
-        const node = findSceneNode(store.scene, id);
-        if (!node) continue;
-        const p = readVec3(node.params?.position, [0, 0, 0]);
-        store.updateNodeParams(id, {
-          position: [p[0] + delta.x, p[1] + delta.y, p[2] + delta.z],
-        });
-      }
-      lastPos.current.copy(pivot.position);
-    };
-
     const setOrbitEnabled = (enabled: boolean) => {
       if (orbitControlsRef.current) {
         orbitControlsRef.current.enabled = enabled;
@@ -70,10 +78,41 @@ export function TransformGizmo() {
     const onDraggingChanged = (event: unknown) => {
       const dragging = (event as { value?: boolean }).value === true;
       setOrbitEnabled(!dragging);
+
+      if (dragging) {
+        // Snapshot the top-level selected nodes' positions at drag start.
+        const store = useEditorStore.getState();
+        const positions = new Map<string, [number, number, number]>();
+        for (const id of topLevelSelectedIds(
+          store.scene,
+          selectedIdsRef.current,
+        )) {
+          const node = findSceneNode(store.scene, id);
+          if (node) positions.set(id, readVec3(node.params?.position, [0, 0, 0]));
+        }
+        dragStartRef.current = { pivot: pivot.position.clone(), positions };
+      } else {
+        dragStartRef.current = null;
+      }
     };
 
-    // Re-enable orbit when the pointer is released anywhere, or the window
-    // loses focus mid-drag.
+    const onObjectChange = () => {
+      const start = dragStartRef.current;
+      if (!start) return;
+
+      const totalDelta = pivot.position.clone().sub(start.pivot);
+      const store = useEditorStore.getState();
+      for (const [id, initial] of start.positions) {
+        store.updateNodeParams(id, {
+          position: [
+            initial[0] + totalDelta.x,
+            initial[1] + totalDelta.y,
+            initial[2] + totalDelta.z,
+          ],
+        });
+      }
+    };
+
     const onWindowBlur = () => setOrbitEnabled(true);
     const onWindowPointerUp = () => setOrbitEnabled(true);
 
@@ -107,9 +146,10 @@ export function TransformGizmo() {
     }
 
     const storeScene = useEditorStore.getState().scene;
+    const ids = topLevelSelectedIds(storeScene, selectedIds);
     const centroid = new THREE.Vector3();
     let count = 0;
-    for (const id of selectedIds) {
+    for (const id of ids) {
       const node = findSceneNode(storeScene, id);
       if (!node) continue;
       const p = readVec3(node.params?.position, [0, 0, 0]);
@@ -126,7 +166,6 @@ export function TransformGizmo() {
 
     centroid.divideScalar(count);
     pivot.position.copy(centroid);
-    lastPos.current.copy(centroid);
     pivot.visible = true;
     helper.visible = true;
   }, [selectedIds]);
