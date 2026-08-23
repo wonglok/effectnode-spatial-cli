@@ -8,6 +8,7 @@ import { ProjectDashboardPage } from "./pages/ProjectDashboardPage";
 import { ProjectPage } from "./pages/ProjectPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { VfxDesignPage } from "./pages/VfxDesignPage";
+import { VfxPreviewPage } from "./pages/VfxPreviewPage";
 import { WelcomePage } from "./pages/WelcomePage";
 import { useProjectsStore } from "./store/projectsStore";
 import { ColumnLayout } from "./components/Projects/ColumnLayout";
@@ -28,6 +29,10 @@ createRoot(document.getElementById("root")!).render(
     <Routes>
       <Route path="/" element={<WelcomePage />} />
       <Route path="/projects" element={<ProjectsPage />} />
+      <Route
+        path="/projects/:projectID/vfx-preview"
+        element={<VfxPreviewPage />}
+      />
       <Route path="/projects/:projectID" element={<ProjectLayout />}>
         <Route
           index

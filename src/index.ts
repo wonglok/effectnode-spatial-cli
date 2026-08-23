@@ -59,6 +59,10 @@ program
             target: `ws://localhost:${backendPort}`,
             ws: true,
           },
+          "/socket.io": {
+            target: `http://localhost:${backendPort}`,
+            ws: true,
+          },
         },
       },
     });

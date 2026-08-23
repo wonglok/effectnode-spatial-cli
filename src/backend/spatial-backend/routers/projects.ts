@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { Router } from "express";
+import express, { Router } from "express";
 import { WORKSPACE_DIR, readJson, writeJson } from "../../workspace.js";
 
 // ---------------------------------------------------------------------------
@@ -79,6 +79,51 @@ async function ensureProjectFolder(id: string, slug: string): Promise<string> {
     });
 
   return dir;
+}
+
+const SUBFOLDERS = ["db", "assets", "uploads"] as const;
+
+/** Create the project's db/assets/uploads subfolders (idempotent). */
+async function ensureProjectFolders(id: string): Promise<string> {
+  const dir = projectDir(id);
+  await Promise.all(
+    SUBFOLDERS.map((sub) => fs.mkdir(path.join(dir, sub), { recursive: true })),
+  );
+  return dir;
+}
+
+async function resolveProject(slug: string): Promise<Project | undefined> {
+  const projects = await loadProjects();
+  return projects.find((p) => p.slug === slug);
+}
+
+const DEFAULT_DESIGN = { scene: [] };
+
+/** Load a project's design JSON (returns a default when none exists yet). */
+export async function loadDesign(slug: string): Promise<unknown> {
+  const project = await resolveProject(slug);
+  if (!project) throw new Error("Project not found");
+  await ensureProjectFolders(project.id);
+  return readJson<unknown>(
+    path.join("projects", project.id, "db", "design.json"),
+    DEFAULT_DESIGN,
+  );
+}
+
+/** Persist a project's design JSON. */
+export async function saveDesign(slug: string, design: unknown): Promise<void> {
+  const project = await resolveProject(slug);
+  if (!project) throw new Error("Project not found");
+  await ensureProjectFolders(project.id);
+  await writeJson(
+    path.join("projects", project.id, "db", "design.json"),
+    design,
+  );
+}
+
+function sanitizeFilename(name: string): string {
+  const base = path.basename(name).replace(/[^a-zA-Z0-9._-]/g, "_");
+  return base || "upload.bin";
 }
 
 function makeStats(): ProjectStats {
@@ -225,4 +270,75 @@ projectsRouter.delete("/:projectID", async (req, res) => {
   await fs.rm(projectDir(project.id), { recursive: true, force: true });
 
   res.status(204).end();
+});
+
+// GET /api/projects/:projectID/design — load the project's design JSON.
+projectsRouter.get("/:projectID/design", async (req, res) => {
+  try {
+    res.json(await loadDesign(req.params.projectID));
+  } catch (err) {
+    res.status(404).json({ error: (err as Error).message });
+  }
+});
+
+// PUT /api/projects/:projectID/design — save the project's design JSON.
+projectsRouter.put("/:projectID/design", async (req, res) => {
+  try {
+    await saveDesign(req.params.projectID, req.body);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(404).json({ error: (err as Error).message });
+  }
+});
+
+// GET /api/projects/:projectID/uploads — list uploaded files.
+projectsRouter.get("/:projectID/uploads", async (req, res) => {
+  const project = await resolveProject(req.params.projectID);
+  if (!project) {
+    res.status(404).json({ error: "Project not found" });
+    return;
+  }
+  await ensureProjectFolders(project.id);
+  const entries = await fs.readdir(
+    path.join(PROJECTS_ROOT, project.id, "uploads"),
+    { withFileTypes: true },
+  );
+  res.json(entries.filter((e) => e.isFile()).map((e) => ({ name: e.name })));
+});
+
+// POST /api/projects/:projectID/uploads?filename=… — upload a binary file.
+projectsRouter.post(
+  "/:projectID/uploads",
+  express.raw({ type: "application/octet-stream", limit: "100gb" }),
+  async (req, res) => {
+    const project = await resolveProject(req.params.projectID);
+    if (!project) {
+      res.status(404).json({ error: "Project not found" });
+      return;
+    }
+    const filename = sanitizeFilename(
+      String(req.query.filename ?? "upload.bin"),
+    );
+    await ensureProjectFolders(project.id);
+    await fs.writeFile(
+      path.join(PROJECTS_ROOT, project.id, "uploads", filename),
+      req.body as Buffer,
+    );
+    res.status(201).json({ name: filename, uri: `uploads/${filename}` });
+  },
+);
+
+// GET /api/projects/:projectID/assets — list committed assets.
+projectsRouter.get("/:projectID/assets", async (req, res) => {
+  const project = await resolveProject(req.params.projectID);
+  if (!project) {
+    res.status(404).json({ error: "Project not found" });
+    return;
+  }
+  await ensureProjectFolders(project.id);
+  const entries = await fs.readdir(
+    path.join(PROJECTS_ROOT, project.id, "assets"),
+    { withFileTypes: true },
+  );
+  res.json(entries.filter((e) => e.isFile()).map((e) => ({ name: e.name })));
 });

@@ -16,6 +16,8 @@ import { homedir } from "node:os";
 import express from "express";
 import cors from "cors";
 import { projectsRouter } from "./routers/projects.js";
+import { Server } from "socket.io";
+import { setupRealtime } from "./realtime.js";
 // import { renderMediaRoutes } from "./render-media.js";
 // import { agentBackend } from "./agent/agent-backend.js";
 // import { generationQueueSetup } from "./generation-queue.js";
@@ -90,11 +92,13 @@ export async function runSetup({
 
   app.use("/api/projects", projectsRouter);
 
-  app.listen(BACKEND_PORT);
-
   const server = createServer(app);
+  const io = new Server(server, {
+    cors: { origin: true, credentials: true },
+  });
+  setupRealtime(io);
 
-  //
+  server.listen(BACKEND_PORT);
 
   return server;
 }

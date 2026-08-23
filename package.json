@@ -57,6 +57,8 @@
     "react-router-dom": "^7.18.2",
     "remark-gfm": "^4.0.1",
     "sharp": "^0.35.3",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "tailwindcss": "^4.3.3",
     "three": "^0.185.1",
     "tsx": "^4.19.0",
