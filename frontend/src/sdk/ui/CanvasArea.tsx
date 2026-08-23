@@ -28,7 +28,3 @@ export function CanvasArea({
     </WebGPUCanvas>
   );
 }
-
-//
-//
-//
