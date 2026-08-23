@@ -62,9 +62,9 @@ function ExportPanel({ project }: { project: Project }) {
             Package “{project.name}”
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-ink-600">
-            Bundles geometry (<span className="font-mono text-xs">.draco</span>),
-            textures (<span className="font-mono text-xs">.avif</span>), and the
-            TSL material graph (
+            Bundles geometry (<span className="font-mono text-xs">.draco</span>
+            ), textures (<span className="font-mono text-xs">.avif</span>), and
+            the TSL material graph (
             <span className="font-mono text-xs">graph.json</span>) into one
             portable archive.
           </p>
@@ -78,7 +78,7 @@ function ExportPanel({ project }: { project: Project }) {
       </div>
 
       <pre className="mt-6 overflow-x-auto rounded-lg border border-ink-100 bg-ink-50 p-4 font-mono text-xs leading-relaxed text-ink-700">
-{`${project.name.toLowerCase().replace(/\s+/g, "-")}.enfx.zip
+        {`${project.name.toLowerCase().replace(/\s+/g, "-")}.enfx.zip
 ├── metadata.json        # format version + provenance
 ├── data.json            # asset manifest + wiring
 ├── graph.json           # TSL material graph (nodes + edges)

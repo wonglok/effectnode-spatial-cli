@@ -10,6 +10,7 @@ import { ProjectsPage } from "./pages/ProjectsPage";
 import { VfxDesignPage } from "./pages/VfxDesignPage";
 import { WelcomePage } from "./pages/WelcomePage";
 import { useProjectsStore } from "./store/projectsStore";
+import { ColumnLayout } from "./components/Projects/Columnlayout";
 
 //
 // ANYPORT (window as any).PORT
@@ -28,9 +29,30 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/" element={<WelcomePage />} />
       <Route path="/projects" element={<ProjectsPage />} />
       <Route path="/projects/:projectID" element={<ProjectLayout />}>
-        <Route index element={<ProjectDashboardPage />} />
-        <Route path="vfx-design" element={<VfxDesignPage />} />
-        <Route path=":page" element={<ProjectPage />} />
+        <Route
+          index
+          element={
+            <ColumnLayout>
+              <ProjectDashboardPage />
+            </ColumnLayout>
+          }
+        />
+        <Route
+          path="vfx-design"
+          element={
+            <ColumnLayout>
+              <VfxDesignPage />
+            </ColumnLayout>
+          }
+        />
+        <Route
+          path=":page"
+          element={
+            <ColumnLayout>
+              <ProjectPage />
+            </ColumnLayout>
+          }
+        />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
