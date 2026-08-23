@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useState } from "react";
 import * as THREE from "three/webgpu";
 import { useThree } from "@react-three/fiber";
-import { useGLTF } from "@react-three/drei";
+import { OrbitControls, useGLTF } from "@react-three/drei";
 import type { SceneNode } from "../../store/editorStore";
 import { useEditorStore } from "../../store/editorStore";
 import { WebGPUCanvas } from "./WebGPUCanvas";
@@ -128,11 +128,7 @@ function PlacementController() {
   if (!hover) return null;
 
   return (
-    <mesh
-      position={hover}
-      rotation={[-Math.PI / 2, 0, 0]}
-      raycast={() => null}
-    >
+    <mesh position={hover} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
       <ringGeometry args={[0.35, 0.45, 48]} />
       <meshBasicMaterial color="#0abab5" transparent opacity={0.9} />
     </mesh>
@@ -148,6 +144,7 @@ export function CanvasArea({
 }) {
   return (
     <WebGPUCanvas>
+      <OrbitControls makeDefault enableDamping />
       <Suspense fallback={null}>
         {scene.map((node) => (
           <SceneElement key={node.id} node={node} />
