@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { OrbitControls } from "@react-three/drei";
 import type { SceneNode } from "../types/scene";
+import { ClickSelector } from "./ClickSelector";
 import { PlacementController } from "./PlacementController";
 import { SceneElement } from "./SceneElement";
 import { TransformGizmo } from "./TransformGizmo";
@@ -26,6 +27,7 @@ export function CanvasArea({
       {editable && <OrbitControls makeDefault enableDamping />}
       {editable && <gridHelper args={[100, 100, 0x777777, 0xbababa]} />}
       {editable && <TransformGizmo />}
+      {editable && <ClickSelector />}
       {editable && <PlacementController />}
     </WebGPUCanvas>
   );
