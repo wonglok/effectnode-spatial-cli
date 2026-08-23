@@ -5,6 +5,7 @@ import { FileManager } from "../components/Editor/FileManager";
 import { OutlinePanel } from "../components/Editor/OutlinePanel";
 import { PropsEditor } from "../components/Editor/PropsEditor";
 import { Toolbar } from "../components/Editor/Toolbar";
+import { api } from "../lib/api";
 import { joinProjectRoom, sendDesignUpdate } from "../lib/socket";
 import { useEditorStore } from "../store/editorStore";
 import { useProjectsStore } from "../store/projectsStore";
@@ -33,6 +34,21 @@ export function VfxDesignPage() {
   // Broadcast every scene change (including the initial state) to the room.
   useEffect(() => {
     if (project) sendDesignUpdate(project.slug, { scene });
+  }, [project, scene]);
+
+  // Auto-save the design (debounced) after any scene change — including when a
+  // GLB is dropped from the file manager — so persistence doesn't depend on the
+  // socket being connected.
+  useEffect(() => {
+    if (!project) return;
+    const timer = setTimeout(() => {
+      api
+        .put(`/projects/${encodeURIComponent(project.slug)}/design`, { scene })
+        .catch(() => {
+          // Backend unreachable; the next scene change will retry.
+        });
+    }, 500);
+    return () => clearTimeout(timer);
   }, [project, scene]);
 
   if (!project) return null;
