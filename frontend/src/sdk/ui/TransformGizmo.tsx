@@ -18,7 +18,7 @@ export function TransformGizmo() {
   selectedIdsRef.current = selectedIds;
 
   const pivotRef = useRef<THREE.Object3D | null>(null);
-  const controlsRef = useRef<TransformControls | null>(null);
+  const helperRef = useRef<THREE.Object3D | null>(null);
   const lastPos = useRef(new THREE.Vector3());
 
   // Create the pivot + controls once, attached to the R3F scene.
@@ -31,7 +31,11 @@ export function TransformGizmo() {
     const controls = new TransformControls(camera, gl.domElement);
     controls.setMode("translate");
     controls.attach(pivot);
-    controlsRef.current = controls;
+
+    const helper = controls.getHelper();
+    helper.visible = false;
+    scene.add(helper);
+    helperRef.current = helper;
 
     const onObjectChange = () => {
       const delta = pivot.position.clone().sub(lastPos.current);
@@ -50,26 +54,25 @@ export function TransformGizmo() {
     };
 
     controls.addEventListener("objectChange", onObjectChange);
-    scene.add(controls);
 
     return () => {
       controls.removeEventListener("objectChange", onObjectChange);
       controls.detach();
       controls.dispose();
-      scene.remove(controls);
+      scene.remove(helper);
       scene.remove(pivot);
       pivotRef.current = null;
-      controlsRef.current = null;
+      helperRef.current = null;
     };
   }, [camera, gl, scene]);
 
   // Re-center the gizmo at the selection centroid whenever selection changes.
   useEffect(() => {
     const pivot = pivotRef.current;
-    const controls = controlsRef.current;
-    if (!pivot || selectedIds.length === 0) {
+    const helper = helperRef.current;
+    if (!pivot || !helper || selectedIds.length === 0) {
       if (pivot) pivot.visible = false;
-      if (controls) controls.visible = false;
+      if (helper) helper.visible = false;
       return;
     }
 
@@ -87,7 +90,7 @@ export function TransformGizmo() {
     }
     if (count === 0) {
       pivot.visible = false;
-      if (controls) controls.visible = false;
+      helper.visible = false;
       return;
     }
 
@@ -95,7 +98,7 @@ export function TransformGizmo() {
     pivot.position.copy(centroid);
     lastPos.current.copy(centroid);
     pivot.visible = true;
-    if (controls) controls.visible = true;
+    helper.visible = true;
   }, [selectedIds]);
 
   return null;

@@ -11,7 +11,7 @@ const ADD_BUTTONS: { type: SceneNodeType; label: string }[] = [
 export function Toolbar() {
   const addNode = useEditorStore((state) => state.addNode);
   const removeNode = useEditorStore((state) => state.removeNode);
-  const selectedId = useEditorStore((state) => state.selectedId);
+  const selectedIds = useEditorStore((state) => state.selectedIds);
 
   return (
     <div className="flex h-12 shrink-0 items-center gap-1.5 border-b border-ink-200 bg-white px-3">
@@ -34,8 +34,8 @@ export function Toolbar() {
 
       <button
         type="button"
-        onClick={() => selectedId && removeNode(selectedId)}
-        disabled={!selectedId}
+        onClick={() => selectedIds.forEach((id) => removeNode(id))}
+        disabled={selectedIds.length === 0}
         className="inline-flex items-center gap-1.5 rounded-lg border border-ink-200 bg-white px-2.5 py-1.5 text-xs font-medium text-ink-700 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
       >
         <IconTrash className="h-3.5 w-3.5" />
