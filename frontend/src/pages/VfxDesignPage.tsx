@@ -7,7 +7,7 @@ import { useEffect } from "react";
 export function VfxDesignPage() {
   const { projectID } = useParams();
   const project = useProjectsStore((state) =>
-    state.projects.find((p) => p.id === projectID),
+    state.projects.find((p) => p.slug === projectID),
   );
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
 

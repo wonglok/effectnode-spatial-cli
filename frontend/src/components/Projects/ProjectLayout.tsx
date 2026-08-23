@@ -32,7 +32,7 @@ const NAV: NavItem[] = [
 export function ProjectLayout() {
   const { projectID } = useParams();
   const project = useProjectsStore((state) =>
-    state.projects.find((p) => p.id === projectID),
+    state.projects.find((p) => p.slug === projectID),
   );
   const status = useProjectsStore((state) => state.status);
   const sidebarCollapsed = useUiStore((state) => state.sidebarCollapsed);
@@ -70,7 +70,7 @@ export function ProjectLayout() {
     );
   }
 
-  const base = `/projects/${project.id}`;
+  const base = `/projects/${project.slug}`;
 
   return (
     <div className="flex min-h-screen">

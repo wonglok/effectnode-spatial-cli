@@ -32,7 +32,7 @@ export function ProjectsPage() {
       setShowCreate(false);
       setName("");
       setDescription("");
-      navigate(`/projects/${project.id}`);
+      navigate(`/projects/${project.slug}`);
     } catch {
       // Creation failed; keep the dialog open so the user can retry.
     }

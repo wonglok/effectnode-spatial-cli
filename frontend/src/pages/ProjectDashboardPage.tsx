@@ -39,7 +39,7 @@ function StatCard({ icon: Icon, label, value }: StatCardProps) {
 export function ProjectDashboardPage() {
   const { projectID } = useParams();
   const project = useProjectsStore((state) =>
-    state.projects.find((p) => p.id === projectID),
+    state.projects.find((p) => p.slug === projectID),
   );
   const updateProject = useProjectsStore((state) => state.updateProject);
 
@@ -49,7 +49,7 @@ export function ProjectDashboardPage() {
 
   if (!project) return null;
 
-  const base = `/projects/${project.id}`;
+  const base = `/projects/${project.slug}`;
 
   const startEdit = () => {
     setDraftName(project.name);
@@ -59,7 +59,7 @@ export function ProjectDashboardPage() {
 
   const saveEdit = async () => {
     try {
-      await updateProject(project.id, {
+      await updateProject(project.slug, {
         name: draftName,
         description: draftDescription,
       });

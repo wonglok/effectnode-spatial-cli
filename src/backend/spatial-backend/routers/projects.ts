@@ -21,6 +21,7 @@ interface ProjectStats {
 
 interface Project {
   id: string;
+  slug: string;
   name: string;
   description: string;
   status: ProjectStatus;
@@ -41,7 +42,11 @@ interface ProjectInput {
 // Storage layout
 //
 //   Local JSON database:  ~/effectnode-spatial/projects.json
-//   Project folders:      ~/effectnode-spatial/projects/:projectID/*
+//   Project folders:      ~/effectnode-spatial/projects/:id/*
+//
+// The `id` is a stable UUID used for the project folder. The `slug` is derived
+// from the project name and is what the API exposes in URLs (the :projectID
+// route parameter), so links are human-readable.
 // ---------------------------------------------------------------------------
 
 const DB_FILE = "projects.json";
@@ -78,12 +83,31 @@ function isAccent(value: unknown): value is AccentKey {
   return (ACCENTS as readonly string[]).includes(value as string);
 }
 
+/** Convert a project name into a URL-safe slug. */
+function slugify(name: string): string {
+  const slug = name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return slug || "project";
+}
+
+/** Ensure a slug is unique by appending a numeric suffix when needed. */
+function uniqueSlug(base: string, projects: Project[]): string {
+  const taken = new Set(projects.map((p) => p.slug));
+  if (!taken.has(base)) return base;
+  let i = 2;
+  while (taken.has(`${base}-${i}`)) i += 1;
+  return `${base}-${i}`;
+}
+
 /** Validate + coerce request input into a patchable `Partial<Project>`. */
 function parseProjectInput(
   input: ProjectInput,
-): Partial<Omit<Project, "id" | "createdAt" | "updatedAt" | "stats">> {
+): Partial<Omit<Project, "id" | "slug" | "createdAt" | "updatedAt" | "stats">> {
   const patch: Partial<
-    Omit<Project, "id" | "createdAt" | "updatedAt" | "stats">
+    Omit<Project, "id" | "slug" | "createdAt" | "updatedAt" | "stats">
   > = {};
 
   if (typeof input.name === "string" && input.name.trim()) {
@@ -114,10 +138,10 @@ projectsRouter.get("/", async (_req, res) => {
   res.json(projects);
 });
 
-// GET /api/projects/:projectID — fetch one project.
+// GET /api/projects/:projectID — fetch one project by its slug.
 projectsRouter.get("/:projectID", async (req, res) => {
   const projects = await loadProjects();
-  const project = projects.find((p) => p.id === req.params.projectID);
+  const project = projects.find((p) => p.slug === req.params.projectID);
 
   if (!project) {
     res.status(404).json({ error: "Project not found" });
@@ -133,10 +157,12 @@ projectsRouter.post("/", async (req, res) => {
   const projects = await loadProjects();
   const patch = parseProjectInput(req.body as ProjectInput);
 
+  const name = patch.name ?? `Untitled Project ${projects.length + 1}`;
   const now = new Date().toISOString();
   const project: Project = {
     id: randomUUID(),
-    name: patch.name ?? `Untitled Project ${projects.length + 1}`,
+    slug: uniqueSlug(slugify(name), projects),
+    name,
     description: patch.description ?? "",
     status: patch.status ?? "draft",
     createdAt: now,
@@ -154,7 +180,7 @@ projectsRouter.post("/", async (req, res) => {
 // PATCH /api/projects/:projectID — update a project's editable fields.
 projectsRouter.patch("/:projectID", async (req, res) => {
   const projects = await loadProjects();
-  const index = projects.findIndex((p) => p.id === req.params.projectID);
+  const index = projects.findIndex((p) => p.slug === req.params.projectID);
 
   if (index === -1) {
     res.status(404).json({ error: "Project not found" });
@@ -178,7 +204,7 @@ projectsRouter.patch("/:projectID", async (req, res) => {
 // DELETE /api/projects/:projectID — delete a project and its folder.
 projectsRouter.delete("/:projectID", async (req, res) => {
   const projects = await loadProjects();
-  const project = projects.find((p) => p.id === req.params.projectID);
+  const project = projects.find((p) => p.slug === req.params.projectID);
 
   if (!project) {
     res.status(404).json({ error: "Project not found" });

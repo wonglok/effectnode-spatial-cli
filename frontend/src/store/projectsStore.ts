@@ -22,8 +22,8 @@ interface ProjectsState {
   error: string | null;
   fetchProjects: () => Promise<void>;
   createProject: (input?: CreateProjectInput) => Promise<Project>;
-  updateProject: (id: string, patch: UpdateProjectInput) => Promise<void>;
-  removeProject: (id: string) => Promise<void>;
+  updateProject: (slug: string, patch: UpdateProjectInput) => Promise<void>;
+  removeProject: (slug: string) => Promise<void>;
 }
 
 function message(err: unknown): string {
@@ -51,20 +51,20 @@ export const useProjectsStore = create<ProjectsState>()((set) => ({
     return project;
   },
 
-  updateProject: async (id, patch) => {
+  updateProject: async (slug, patch) => {
     const updated = await api.patch<Project>(
-      `/projects/${encodeURIComponent(id)}`,
+      `/projects/${encodeURIComponent(slug)}`,
       patch,
     );
     set((state) => ({
-      projects: state.projects.map((p) => (p.id === id ? updated : p)),
+      projects: state.projects.map((p) => (p.slug === slug ? updated : p)),
     }));
   },
 
-  removeProject: async (id) => {
-    await api.remove(`/projects/${encodeURIComponent(id)}`);
+  removeProject: async (slug) => {
+    await api.remove(`/projects/${encodeURIComponent(slug)}`);
     set((state) => ({
-      projects: state.projects.filter((p) => p.id !== id),
+      projects: state.projects.filter((p) => p.slug !== slug),
     }));
   },
 }));

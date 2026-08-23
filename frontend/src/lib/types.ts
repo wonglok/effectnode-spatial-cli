@@ -10,6 +10,7 @@ export interface ProjectStats {
 
 export interface Project {
   id: string;
+  slug: string;
   name: string;
   description: string;
   status: ProjectStatus;

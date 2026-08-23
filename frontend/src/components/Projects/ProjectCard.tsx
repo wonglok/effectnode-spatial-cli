@@ -12,7 +12,7 @@ const STATUS_STYLES: Record<Project["status"], string> = {
 export function ProjectCard({ project }: { project: Project }) {
   return (
     <Link
-      to={`/projects/${project.id}`}
+      to={`/projects/${project.slug}`}
       className="card group flex flex-col rounded-xl p-5 transition hover:-translate-y-0.5 hover:shadow-card-hover"
     >
       <div className="flex items-start justify-between">

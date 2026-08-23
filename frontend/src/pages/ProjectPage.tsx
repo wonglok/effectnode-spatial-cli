@@ -132,7 +132,7 @@ function SettingsPanel({ project }: { project: Project }) {
 
   const save = async () => {
     try {
-      await updateProject(project.id, { name, description, status });
+      await updateProject(project.slug, { name, description, status });
     } catch {
       // Save failed; keep the form as-is so the user can retry.
     }
@@ -140,7 +140,7 @@ function SettingsPanel({ project }: { project: Project }) {
 
   const remove = async () => {
     try {
-      await removeProject(project.id);
+      await removeProject(project.slug);
       navigate("/projects");
     } catch {
       // Delete failed; stay on the page so the user can retry.
@@ -252,7 +252,7 @@ function PlaceholderPanel({ meta }: { meta: PageMeta }) {
 export function ProjectPage() {
   const { projectID, page } = useParams();
   const project = useProjectsStore((state) =>
-    state.projects.find((p) => p.id === projectID),
+    state.projects.find((p) => p.slug === projectID),
   );
 
   if (!project) return null;
@@ -267,7 +267,7 @@ export function ProjectPage() {
           This section doesn't exist in the project.
         </p>
         <Link
-          to={`/projects/${project.id}`}
+          to={`/projects/${project.slug}`}
           className="btn-primary mt-5 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold"
         >
           <IconChevronLeft className="h-4 w-4" /> Back to dashboard
