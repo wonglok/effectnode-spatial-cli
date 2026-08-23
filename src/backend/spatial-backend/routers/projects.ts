@@ -64,10 +64,20 @@ async function saveProjects(projects: Project[]): Promise<void> {
   await writeJson(DB_FILE, projects);
 }
 
-/** Create the project's folder (idempotent). Returns the absolute path. */
-async function ensureProjectFolder(id: string): Promise<string> {
+/** Create the project's folder and its <slug>.txt placeholder (idempotent). */
+async function ensureProjectFolder(id: string, slug: string): Promise<string> {
   const dir = projectDir(id);
   await fs.mkdir(dir, { recursive: true });
+
+  // `slug` is always produced by slugify(), but re-sanitize it here anyway so
+  // a tampered database can't smuggle path separators into the filename.
+  const thanksFile = path.join(dir, `${slugify(slug)}.txt`);
+  await fs
+    .writeFile(thanksFile, "thank you for using EffectNode!", { flag: "wx" })
+    .catch((err: unknown) => {
+      if ((err as { code?: string }).code !== "EEXIST") throw err;
+    });
+
   return dir;
 }
 
@@ -148,7 +158,7 @@ projectsRouter.get("/:projectID", async (req, res) => {
     return;
   }
 
-  await ensureProjectFolder(project.id);
+  await ensureProjectFolder(project.id, project.slug);
   res.json(project);
 });
 
@@ -171,7 +181,7 @@ projectsRouter.post("/", async (req, res) => {
     stats: makeStats(),
   };
 
-  await ensureProjectFolder(project.id);
+  await ensureProjectFolder(project.id, project.slug);
   await saveProjects([project, ...projects]);
 
   res.status(201).json(project);
