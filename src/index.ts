@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import chalk from "chalk";
 import { loadProjects } from "./backend/spatial-backend/routers/projects/store.js";
+import { assetsList } from "./backend/spatial-backend/cli/assets.js";
 import {
   sceneAdd,
   sceneClear,
@@ -67,6 +68,15 @@ program
   .action(
     run(async () => {
       console.log(JSON.stringify(await loadProjects(), null, 2));
+    }),
+  );
+
+program
+  .command("assets <slug>")
+  .description("List a project's asset files as JSON (name, src)")
+  .action(
+    run(async (slug: string) => {
+      console.log(JSON.stringify(await assetsList(slug), null, 2));
     }),
   );
 
