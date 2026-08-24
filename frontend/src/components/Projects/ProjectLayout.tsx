@@ -1,5 +1,12 @@
 import { useEffect, type ComponentType } from "react";
-import { Link, NavLink, Outlet, useMatch, useParams } from "react-router-dom";
+import {
+  Link,
+  NavLink,
+  Outlet,
+  useMatch,
+  useParams,
+  useResolvedPath,
+} from "react-router-dom";
 import { useProjectsStore } from "../../store/projectsStore";
 import { useScenesStore } from "../../store/scenesStore";
 import { useUiStore } from "../../store/uiStore";
@@ -202,9 +209,26 @@ export function ProjectLayout() {
                 Projects
               </Link>
               <span className="text-ink-300">/</span>
-              <span className="truncate font-medium text-ink-800">
+              <Link
+                to={`/projects/${project.slug}`}
+                className="truncate font-medium text-ink-800"
+              >
                 {project.name}
-              </span>
+              </Link>
+
+              {location.pathname.includes("/scenes") && (
+                <>
+                  <span className="text-ink-300">/</span>
+
+                  <Link
+                    to={`/projects/${project.slug}/scenes`}
+                    className="truncate font-medium text-ink-800"
+                  >
+                    {`Scenes`}
+                  </Link>
+                </>
+              )}
+
               {sceneSlug && (
                 <>
                   <span className="text-ink-300">/</span>
