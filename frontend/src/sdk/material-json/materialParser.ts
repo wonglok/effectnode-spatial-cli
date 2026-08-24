@@ -1,4 +1,13 @@
-import { Node, NodeMaterial } from "three/webgpu";
+import {
+  Color,
+  Matrix3,
+  Matrix4,
+  Node,
+  NodeMaterial,
+  Vector2,
+  Vector3,
+  Vector4,
+} from "three/webgpu";
 import {
   MaterialGraphJSON,
   SerializedNode,
@@ -6,6 +15,66 @@ import {
   NodeRegistry,
 } from "./types";
 import { defaultNodeRegistry } from "./nodeRegistry";
+
+// ---------------------------------------------------------------------------
+// Node `value` codec. Node values can be primitives (numbers/strings/bools) or
+// three.js objects (Color, Vector2/3/4, Matrix3/4). JSON can only carry the
+// former, so complex values are wrapped in a `{ __type, value }` envelope.
+// This keeps parse -> hydrate and parse -> jsonToCode both lossless.
+// ---------------------------------------------------------------------------
+
+type SerializedComplexValue =
+  | { __type: "color"; value: number }
+  | { __type: "vec2" | "vec3" | "vec4"; value: number[] }
+  | { __type: "mat3" | "mat4"; value: number[] };
+
+function serializeNodeValue(value: unknown): unknown {
+  if (value === null || value === undefined) return undefined;
+  const type = typeof value;
+  if (
+    type === "number" ||
+    type === "string" ||
+    type === "boolean" ||
+    type === "bigint"
+  ) {
+    return value;
+  }
+  const v = value as Record<string, any>;
+  if (v.isColor === true) return { __type: "color", value: v.getHex() };
+  if (v.isVector2 === true) return { __type: "vec2", value: [v.x, v.y] };
+  if (v.isVector3 === true)
+    return { __type: "vec3", value: [v.x, v.y, v.z] };
+  if (v.isVector4 === true)
+    return { __type: "vec4", value: [v.x, v.y, v.z, v.w] };
+  if (v.isMatrix3 === true)
+    return { __type: "mat3", value: Array.from(v.elements) };
+  if (v.isMatrix4 === true)
+    return { __type: "mat4", value: Array.from(v.elements) };
+  return undefined;
+}
+
+function deserializeNodeValue(value: unknown): unknown {
+  if (value && typeof value === "object" && "__type" in (value as object)) {
+    const { __type, value: inner } = value as SerializedComplexValue;
+    switch (__type) {
+      case "color":
+        return new Color(inner as number);
+      case "vec2":
+        return new Vector2(...(inner as number[]));
+      case "vec3":
+        return new Vector3(...(inner as number[]));
+      case "vec4":
+        return new Vector4(...(inner as number[]));
+      case "mat3":
+        return new Matrix3().fromArray(inner as number[]);
+      case "mat4":
+        return new Matrix4().fromArray(inner as number[]);
+      default:
+        return value;
+    }
+  }
+  return value;
+}
 
 const MATERIAL_SLOTS = [
   "colorNode",
@@ -69,9 +138,13 @@ export function parseNodeMaterialToJSON(
 
     nodesMap.set(nodeId, serializedNode);
 
-    // Capture primitive scalar values if stored directly on node
-    if ("value" in node && typeof (node as any).value !== "object") {
-      serializedNode.value = (node as any).value;
+    // Capture node values (scalars, colors, vectors, matrices) in a JSON-safe
+    // form so colors/vectors don't get dropped by JSON.stringify.
+    if ("value" in node) {
+      const serializedValue = serializeNodeValue((node as any).value);
+      if (serializedValue !== undefined) {
+        serializedNode.value = serializedValue;
+      }
     }
 
     // Process properties and child nodes
@@ -154,7 +227,9 @@ export function hydrateJSONToNodeMaterial<T extends NodeMaterial>(
 
     // Handle initial constructor arguments or fallback instantiation
     if (serializedNode.value !== undefined) {
-      nodeInstance = new (NodeCtor as any)(serializedNode.value);
+      nodeInstance = new (NodeCtor as any)(
+        deserializeNodeValue(serializedNode.value),
+      );
     } else {
       nodeInstance = new NodeCtor();
     }

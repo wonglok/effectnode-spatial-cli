@@ -1,6 +1,7 @@
-import type { ComponentType } from "react";
-import { Link, NavLink, Outlet, useParams } from "react-router-dom";
+import { useEffect, type ComponentType } from "react";
+import { Link, NavLink, Outlet, useMatch, useParams } from "react-router-dom";
 import { useProjectsStore } from "../../store/projectsStore";
+import { useScenesStore } from "../../store/scenesStore";
 import { useUiStore } from "../../store/uiStore";
 import {
   IconChevronLeft,
@@ -37,6 +38,19 @@ export function ProjectLayout() {
   const status = useProjectsStore((state) => state.status);
   const sidebarCollapsed = useUiStore((state) => state.sidebarCollapsed);
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
+
+  const sceneSlug = useMatch("/projects/:projectID/scenes/:sceneSlug")?.params
+    .sceneSlug;
+  const scene = useScenesStore((state) =>
+    sceneSlug ? state.scenes.find((s) => s.slug === sceneSlug) : undefined,
+  );
+  const fetchScenes = useScenesStore((state) => state.fetchScenes);
+
+  // Keep the scene list loaded so the breadcrumb can resolve a scene name even
+  // on a deep link (e.g. /scenes/<slug> without visiting the scenes page first).
+  useEffect(() => {
+    if (project?.slug) fetchScenes(project.slug).catch(() => {});
+  }, [project?.slug, fetchScenes]);
 
   if (status === "loading") {
     return (
@@ -191,6 +205,14 @@ export function ProjectLayout() {
               <span className="truncate font-medium text-ink-800">
                 {project.name}
               </span>
+              {sceneSlug && (
+                <>
+                  <span className="text-ink-300">/</span>
+                  <span className="truncate font-medium text-ink-800">
+                    {scene?.name ?? sceneSlug}
+                  </span>
+                </>
+              )}
             </nav>
 
             <Link
