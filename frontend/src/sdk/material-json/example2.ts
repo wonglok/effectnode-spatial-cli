@@ -33,3 +33,7 @@ console.log(tslSource);
 const rootExpression = nodeExpression(jsonGraph, jsonGraph.rootNodeId);
 console.log(rootExpression);
 // -> mul(color(0x33aaff).xyz, smoothstep(float(0.2), float(0.8), vec3(0.5, 0.5, 0.5)))
+
+//
+
+//
