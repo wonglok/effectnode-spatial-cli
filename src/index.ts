@@ -5,6 +5,7 @@ import path from "node:path";
 import chalk from "chalk";
 import { loadProjects } from "./backend/spatial-backend/routers/projects/store.js";
 import { assetsList } from "./backend/spatial-backend/cli/assets.js";
+import { printExampleUsage } from "./backend/spatial-backend/cli/usage.js";
 import {
   sceneAdd,
   sceneClear,
@@ -60,6 +61,11 @@ program
       },
     );
   });
+
+program
+  .command("example-usage")
+  .description("Print example CLI usage (generalized placeholders)")
+  .action(() => printExampleUsage());
 
 // --- projects -----------------------------------------------------------------
 
