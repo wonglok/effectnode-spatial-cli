@@ -47,7 +47,14 @@ createRoot(document.getElementById("root")!).render(
           }
         />
 
-        <Route path="scenes" element={<ScenesPage />} />
+        <Route
+          path="scenes"
+          element={
+            <ColumnLayout>
+              <ScenesPage />
+            </ColumnLayout>
+          }
+        />
         <Route path="scenes/:sceneSlug" element={<SceneEditorPage />} />
 
         <Route
