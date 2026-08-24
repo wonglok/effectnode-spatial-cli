@@ -81,7 +81,7 @@ async function ensureProjectFolder(id: string, slug: string): Promise<string> {
   return dir;
 }
 
-const SUBFOLDERS = ["db", "assets", "uploads", "json/scene-nodes"] as const;
+const SUBFOLDERS = ["db", "assets", "uploads"] as const;
 
 /** Create the project's db/assets/uploads subfolders (idempotent). */
 export async function ensureProjectFolders(id: string): Promise<string> {
@@ -102,70 +102,6 @@ export async function resolveProject(
 function sanitizeFilename(name: string): string {
   const base = path.basename(name).replace(/[^a-zA-Z0-9._-]/g, "_");
   return base || "upload.bin";
-}
-
-// ---------------------------------------------------------------------------
-// Scene-node storage — one file per node under json/scene-nodes/*.js
-// ---------------------------------------------------------------------------
-
-function sceneNodesDir(id: string): string {
-  return path.join(PROJECTS_ROOT, id, "json", "scene-nodes");
-}
-
-function sanitizeNodeId(id: string): string {
-  return String(id).replace(/[^a-zA-Z0-9._-]/g, "_") || "node";
-}
-
-export async function listSceneNodes(slug: string): Promise<unknown[]> {
-  const project = await resolveProject(slug);
-  if (!project) throw new Error("Project not found");
-  const dir = sceneNodesDir(project.id);
-  await fs.mkdir(dir, { recursive: true });
-  const entries = await fs.readdir(dir, { withFileTypes: true });
-  const nodes: unknown[] = [];
-  for (const entry of entries) {
-    if (entry.isFile() && entry.name.endsWith(".js")) {
-      try {
-        nodes.push(
-          JSON.parse(await fs.readFile(path.join(dir, entry.name), "utf-8")),
-        );
-      } catch {
-        // Skip malformed node files.
-      }
-    }
-  }
-  return nodes;
-}
-
-export async function saveSceneNode(
-  slug: string,
-  node: { id?: unknown },
-): Promise<unknown> {
-  const project = await resolveProject(slug);
-  if (!project) throw new Error("Project not found");
-  if (typeof node?.id !== "string" || !node.id) {
-    throw new Error("Scene node requires a string id");
-  }
-  const dir = sceneNodesDir(project.id);
-  await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(
-    path.join(dir, `${sanitizeNodeId(node.id)}.js`),
-    JSON.stringify(node, null, 2),
-    "utf-8",
-  );
-  return node;
-}
-
-export async function deleteSceneNode(
-  slug: string,
-  nodeId: string,
-): Promise<void> {
-  const project = await resolveProject(slug);
-  if (!project) throw new Error("Project not found");
-  await fs.rm(
-    path.join(sceneNodesDir(project.id), `${sanitizeNodeId(nodeId)}.js`),
-    { force: true },
-  );
 }
 
 function makeStats(): ProjectStats {

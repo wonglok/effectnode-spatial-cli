@@ -17,8 +17,6 @@ import express from "express";
 import cors from "cors";
 import { projectsRouter } from "./routers/projects.js";
 import { designRouter } from "./routers/design.js";
-import { Server } from "socket.io";
-import { setupRealtime } from "./realtime.js";
 // import { renderMediaRoutes } from "./render-media.js";
 // import { agentBackend } from "./agent/agent-backend.js";
 // import { generationQueueSetup } from "./generation-queue.js";
@@ -95,13 +93,6 @@ export async function runSetup({
   app.use("/api/projects", designRouter);
 
   const server = createServer(app);
-  const io = new Server(server, {
-    // Local single-user tool: the browser reaches the backend same-origin via
-    // the Vite proxy, so no credentials are ever sent. `origin: true` reflects
-    // the request origin to allow LAN access for the mobile /vfx-preview view.
-    cors: { origin: true },
-  });
-  setupRealtime(io);
 
   server.listen(BACKEND_PORT);
 
