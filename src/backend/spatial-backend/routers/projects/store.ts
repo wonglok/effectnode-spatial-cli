@@ -27,7 +27,8 @@ export function uploadsDir(id: string): string {
 }
 
 export function assetsDir(id: string): string {
-  return path.join(PROJECTS_ROOT, id, "assets");
+  // Assets and uploads share one folder: scene assets live in `uploads`.
+  return uploadsDir(id);
 }
 
 export async function loadProjects(): Promise<Project[]> {
