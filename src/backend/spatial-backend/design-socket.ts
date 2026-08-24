@@ -1,5 +1,13 @@
 import { Server, type Socket } from "socket.io";
 import { loadDesign, saveDesign } from "./routers/design.js";
+import {
+  type Design,
+  type SceneNode,
+  addNode,
+  removeNode,
+  renameNode,
+  patchNode,
+} from "./scene.js";
 
 // ---------------------------------------------------------------------------
 // Socket.io design API — replaces the REST design object
@@ -14,30 +22,6 @@ import { loadDesign, saveDesign } from "./routers/design.js";
 // trusted as-is and CORS reflects the connecting origin. Do NOT deploy this
 // multi-tenant without handshake auth + per-event project authorization.
 // ---------------------------------------------------------------------------
-
-// Mirrored from frontend/src/sdk/types/scene.ts (the backend cannot import it).
-export type SceneNodeType =
-  | "group"
-  | "mesh"
-  | "geometry"
-  | "material"
-  | "light"
-  | "camera"
-  | "model"
-  | "environment";
-
-export interface SceneNode {
-  id: string;
-  name: string;
-  type: SceneNodeType;
-  params?: Record<string, unknown>;
-  children?: SceneNode[];
-}
-
-export interface Design {
-  scene: SceneNode[];
-  [key: string]: unknown;
-}
 
 interface CachedDesign {
   design: Design;
@@ -85,60 +69,13 @@ interface ReplacePayload {
   scene: SceneNode[];
 }
 
-// --- pure tree helpers -------------------------------------------------------
-
-/** Append a node to the end of the scene. */
-function addNode(scene: SceneNode[], node: SceneNode): SceneNode[] {
-  return [...scene, node];
-}
-
-/** Remove the node with the given id (including any descendants). */
-function removeNode(scene: SceneNode[], id: string): SceneNode[] {
-  return scene
-    .filter((node) => node.id !== id)
-    .map((node) =>
-      node.children
-        ? { ...node, children: removeNode(node.children, id) }
-        : node,
-    );
-}
-
-/** Rename the node with the given id. */
-function renameNode(
-  scene: SceneNode[],
-  id: string,
-  name: string,
-): SceneNode[] {
-  return scene.map((node) => {
-    const next = node.id === id ? { ...node, name } : node;
-    return next.children
-      ? { ...next, children: renameNode(next.children, id, name) }
-      : next;
-  });
-}
-
-/** Merge params into the node with the given id. */
-function patchNode(
-  scene: SceneNode[],
-  id: string,
-  params: Record<string, unknown>,
-): SceneNode[] {
-  return scene.map((node) => {
-    const next =
-      node.id === id ? { ...node, params: { ...node.params, ...params } } : node;
-    return next.children
-      ? { ...next, children: patchNode(next.children, id, params) }
-      : next;
-  });
-}
-
 // --- cache / persistence -----------------------------------------------------
 
 /** Return the cached design for a slug, loading and caching it on first use. */
 async function getOrLoadDesign(slug: string): Promise<Design> {
   const cached = designs.get(slug);
   if (cached) return cached.design;
-  const design = (await loadDesign(slug)) as Design;
+  const design = await loadDesign(slug);
   designs.set(slug, { design });
   return design;
 }
