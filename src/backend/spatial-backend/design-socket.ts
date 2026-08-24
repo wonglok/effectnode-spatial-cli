@@ -8,6 +8,11 @@ import { loadDesign, saveDesign } from "./routers/design.js";
 // Each project lives in a room named `design:<slug>`. Mutations are applied to
 // an in-memory authoritative copy, debounced-persisted to disk, then broadcast
 // to the OTHER sockets in the room (the sender already applied the change).
+//
+// Trust model: this is a single-user local tool with no user accounts or
+// sessions (matching the REST API it replaces), so the client-supplied slug is
+// trusted as-is and CORS reflects the connecting origin. Do NOT deploy this
+// multi-tenant without handshake auth + per-event project authorization.
 // ---------------------------------------------------------------------------
 
 // Mirrored from frontend/src/sdk/types/scene.ts (the backend cannot import it).
