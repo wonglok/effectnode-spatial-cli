@@ -24,8 +24,8 @@ const program = new Command();
 program
   .name("effectnode-spatial")
   .description(
-    "EffectNode spatial studio — start the app, or drive the scene graph headlessly " +
-      "with the `projects` and `scene` subcommands (for AI agents / Claude Code).",
+    "EffectNode spatial studio — run `web` to start the app, or drive the scene " +
+      "graph headlessly with the `projects` and `scene` subcommands.",
   )
   .version("0.1.0");
 
@@ -40,6 +40,24 @@ function run(fn: (...args: any[]) => Promise<void>) {
     }
   };
 }
+
+// --- web (start the app) ------------------------------------------------------
+
+program
+  .command("web")
+  .description("Start the web app (Vite + backend) and open the browser")
+  .option("--frontend-port <port>", "Frontend (Vite) port", "5288")
+  .option("--backend-port <port>", "Backend (Express) port", "5201")
+  .option("--no-open", "Do not open the browser")
+  .action(async (options) => {
+    await start(
+      options as {
+        frontendPort: string;
+        backendPort: string;
+        open: boolean;
+      },
+    );
+  });
 
 // --- projects -----------------------------------------------------------------
 
@@ -172,20 +190,6 @@ async function start(options: {
   process.once("SIGINT", shutdown);
   process.once("SIGTERM", shutdown);
 }
-
-program
-  .option("--frontend-port <port>", "Frontend (Vite) port", "5288")
-  .option("--backend-port <port>", "Backend (Express) port", "5201")
-  .option("--no-open", "Do not open the browser")
-  .action(async (options) => {
-    await start(
-      options as {
-        frontendPort: string;
-        backendPort: string;
-        open: boolean;
-      },
-    );
-  });
 
 program.parseAsync().catch((err: Error) => {
   console.error(chalk.red(`\n✖ ${err.message}`));
