@@ -1,7 +1,7 @@
 import path from "node:path";
 import { Router } from "express";
 import { readJson, writeJson } from "../../workspace.js";
-import { ensureProjectFolders, resolveProject } from "./projects.js";
+import { ensureProjectFolders, resolveProject } from "./projects/store.js";
 
 const DEFAULT_DESIGN = { scene: [] };
 

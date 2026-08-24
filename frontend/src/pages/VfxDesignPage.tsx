@@ -57,6 +57,31 @@ export function VfxDesignPage() {
     };
   }, [project, setScene]);
 
+  // Undo/redo keyboard shortcuts (⌘/Ctrl+Z, ⇧⌘/Ctrl+Shift+Z). Skipped while
+  // typing in a field so the browser's native text undo keeps working there.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey)) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        if (e.shiftKey) useEditorStore.getState().redo();
+        else useEditorStore.getState().undo();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   // Auto-save the design (debounced) after any scene change — including when a
   // GLB is dropped from the file manager.
   useEffect(() => {

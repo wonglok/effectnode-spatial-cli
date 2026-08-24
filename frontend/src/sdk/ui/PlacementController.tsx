@@ -80,30 +80,44 @@ export function PlacementController() {
     const onDrop = (e: DragEvent) => {
       e.preventDefault();
       const src = e.dataTransfer?.getData(ASSET_MIME);
-      if (!src) {
+
+      if (src) {
+        const name = src.split("/").pop() || "Asset";
+        const ext = src.split(".").pop()?.toLowerCase();
+
+        if (ext === "hdr") {
+          // Environment map — global lighting, no world position needed.
+          addNode(
+            "environment",
+            {
+              src,
+              environmentIntensity: 1,
+              backgroundIntensity: 1,
+              useEnvironment: true,
+              useBackground: true,
+            },
+            name,
+          );
+        } else {
+          const position = toPoint(e);
+          if (position) addNode("model", { src, position }, name);
+        }
         setHover(null);
         return;
       }
-      const name = src.split("/").pop() || "Asset";
-      const ext = src.split(".").pop()?.toLowerCase();
 
-      if (ext === "hdr") {
-        // Environment map — global lighting, no world position needed.
-        addNode(
-          "environment",
-          {
-            src,
-            environmentIntensity: 1,
-            backgroundIntensity: 1,
-            useEnvironment: true,
-            useBackground: true,
-          },
-          name,
-        );
-      } else {
+      // Filesystem drop (a real .glb/.gltf file, not an internal asset drag):
+      // create an object URL and place the model at the raycast point.
+      const file = Array.from(e.dataTransfer?.files ?? []).find((f) =>
+        /\.(glb|gltf)$/i.test(f.name),
+      );
+      if (file) {
         const position = toPoint(e);
-        if (position) addNode("model", { src, position }, name);
+        if (position) {
+          addNode("model", { src: URL.createObjectURL(file), position }, file.name);
+        }
       }
+
       setHover(null);
     };
 

@@ -15,7 +15,7 @@ import { createServer as createNetServer } from "node:net";
 import { homedir } from "node:os";
 import express from "express";
 import cors from "cors";
-import { projectsRouter } from "./routers/projects.js";
+import { projectsRouter } from "./routers/projects/index.js";
 import { designRouter } from "./routers/design.js";
 // import { renderMediaRoutes } from "./render-media.js";
 // import { agentBackend } from "./agent/agent-backend.js";

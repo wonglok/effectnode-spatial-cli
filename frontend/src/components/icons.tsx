@@ -149,6 +149,24 @@ export function IconEdit({ className }: IconProps) {
   );
 }
 
+export function IconUndo({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M9 14L4 9l5-5" />
+      <path d="M4 9h10a6 6 0 0 1 6 6v0a6 6 0 0 1-6 6H7" />
+    </Svg>
+  );
+}
+
+export function IconRedo({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M15 14l5-5-5-5" />
+      <path d="M20 9H10a6 6 0 0 0-6 6v0a6 6 0 0 0 6 6h7" />
+    </Svg>
+  );
+}
+
 export function IconCamera({ className }: IconProps) {
   return (
     <Svg className={className}>
