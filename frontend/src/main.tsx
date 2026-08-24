@@ -7,6 +7,8 @@ import { ProjectLayout } from "./components/Projects/ProjectLayout";
 import { ProjectDashboardPage } from "./pages/ProjectDashboardPage";
 import { ProjectPage } from "./pages/ProjectPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
+import { MaterialEditorPage } from "./pages/MaterialEditorPage";
+import { MaterialsPage } from "./pages/MaterialsPage";
 import { SceneEditorPage } from "./pages/SceneEditorPage";
 import { ScenePreviewPage } from "./pages/ScenePreviewPage";
 import { ScenesPage } from "./pages/ScenesPage";
@@ -57,6 +59,17 @@ createRoot(document.getElementById("root")!).render(
         />
 
         <Route path="scenes/:sceneSlug" element={<SceneEditorPage />} />
+
+        <Route
+          path="materials"
+          element={
+            <ColumnLayout>
+              <MaterialsPage />
+            </ColumnLayout>
+          }
+        />
+
+        <Route path="materials/:materialSlug" element={<MaterialEditorPage />} />
 
         <Route
           path=":page"

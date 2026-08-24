@@ -6,7 +6,6 @@ import {
   IconChevronLeft,
   IconEffects,
   IconExport,
-  IconMaterials,
   IconSdk,
   IconSettings,
   IconTrash,
@@ -25,11 +24,6 @@ const PAGE_META: Record<string, PageMeta> = {
     title: "Effects",
     description: "Node-based effects in this project.",
     icon: IconEffects,
-  },
-  materials: {
-    title: "Materials",
-    description: "TSL material graphs authored for WebGPU.",
-    icon: IconMaterials,
   },
   assets: {
     title: "Assets",

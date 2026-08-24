@@ -7,6 +7,7 @@ import {
   useParams,
   useResolvedPath,
 } from "react-router-dom";
+import { useMaterialsStore } from "../../store/materialsStore";
 import { useProjectsStore } from "../../store/projectsStore";
 import { useScenesStore } from "../../store/scenesStore";
 import { useUiStore } from "../../store/uiStore";
@@ -16,6 +17,7 @@ import {
   IconEffects,
   IconExport,
   IconFolder,
+  IconMaterials,
   IconSdk,
   IconSettings,
 } from "../icons";
@@ -30,7 +32,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { segment: "", label: "Dashboard", icon: IconDashboard, end: true },
   { segment: "scenes", label: "Scene Editor", icon: IconEffects },
-  // { segment: "materials", label: "Materials", icon: IconMaterials },
+  { segment: "materials", label: "Materials", icon: IconMaterials },
   // { segment: "assets", label: "Assets", icon: IconAssets },
   { segment: "export", label: "Export .enfx", icon: IconExport },
   { segment: "sdk", label: "Download SDK", icon: IconSdk },
@@ -53,11 +55,23 @@ export function ProjectLayout() {
   );
   const fetchScenes = useScenesStore((state) => state.fetchScenes);
 
-  // Keep the scene list loaded so the breadcrumb can resolve a scene name even
-  // on a deep link (e.g. /scenes/<slug> without visiting the scenes page first).
+  const materialSlug = useMatch("/projects/:projectID/materials/:materialSlug")
+    ?.params.materialSlug;
+  const material = useMaterialsStore((state) =>
+    materialSlug
+      ? state.materials.find((m) => m.slug === materialSlug)
+      : undefined,
+  );
+  const fetchMaterials = useMaterialsStore((state) => state.fetchMaterials);
+
+  // Keep the scene and material lists loaded so the breadcrumb can resolve a
+  // name even on a deep link (e.g. /scenes/<slug> or /materials/<slug> without
+  // visiting the corresponding list page first).
   useEffect(() => {
-    if (project?.slug) fetchScenes(project.slug).catch(() => {});
-  }, [project?.slug, fetchScenes]);
+    if (!project?.slug) return;
+    fetchScenes(project.slug).catch(() => {});
+    fetchMaterials(project.slug).catch(() => {});
+  }, [project?.slug, fetchScenes, fetchMaterials]);
 
   if (status === "loading") {
     return (
@@ -234,6 +248,28 @@ export function ProjectLayout() {
                   <span className="text-ink-300">/</span>
                   <span className="truncate font-medium text-ink-800">
                     {scene?.name ?? sceneSlug}
+                  </span>
+                </>
+              )}
+
+              {location.pathname.includes("/materials") && (
+                <>
+                  <span className="text-ink-300">/</span>
+
+                  <Link
+                    to={`/projects/${project.slug}/materials`}
+                    className="truncate font-medium text-ink-800"
+                  >
+                    {`Materials`}
+                  </Link>
+                </>
+              )}
+
+              {materialSlug && (
+                <>
+                  <span className="text-ink-300">/</span>
+                  <span className="truncate font-medium text-ink-800">
+                    {material?.name ?? materialSlug}
                   </span>
                 </>
               )}

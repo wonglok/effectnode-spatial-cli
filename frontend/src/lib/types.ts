@@ -26,3 +26,10 @@ export interface SceneMetadata {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface MaterialMetadata {
+  slug: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
