@@ -16,7 +16,7 @@ import { homedir } from "node:os";
 import express from "express";
 import cors from "cors";
 import { projectsRouter } from "./routers/projects/index.js";
-import { designRouter } from "./routers/design.js";
+import { attachDesignSocket } from "./design-socket.js";
 // import { renderMediaRoutes } from "./render-media.js";
 // import { agentBackend } from "./agent/agent-backend.js";
 // import { generationQueueSetup } from "./generation-queue.js";
@@ -90,9 +90,10 @@ export async function runSetup({
   });
 
   app.use("/api/projects", projectsRouter);
-  app.use("/api/projects", designRouter);
 
   const server = createServer(app);
+
+  attachDesignSocket(server);
 
   server.listen(BACKEND_PORT);
 

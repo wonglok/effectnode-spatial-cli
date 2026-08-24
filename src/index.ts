@@ -56,8 +56,9 @@ program
             changeOrigin: true,
           },
           "/ws": {
-            target: `ws://localhost:${backendPort}`,
+            target: `http://localhost:${backendPort}`,
             ws: true,
+            changeOrigin: true,
           },
         },
       },

@@ -1,15 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { CanvasArea } from "../sdk/ui/CanvasArea";
 import { FileManager } from "../components/Editor/FileManager";
 import { OutlinePanel } from "../components/Editor/OutlinePanel";
 import { PropsEditor } from "../components/Editor/PropsEditor";
 import { Toolbar } from "../components/Editor/Toolbar";
-import { api } from "../lib/api";
 import { useEditorStore } from "../store/editorStore";
-import type { SceneNode } from "../sdk/types/scene";
 import { useProjectsStore } from "../store/projectsStore";
 import { useUiStore } from "../store/uiStore";
+import { useDesignSocket } from "../lib/designSocket";
 
 export function VfxDesignPage() {
   const { projectID } = useParams();
@@ -18,8 +17,6 @@ export function VfxDesignPage() {
   );
   const setSidebarCollapsed = useUiStore((state) => state.setSidebarCollapsed);
   const scene = useEditorStore((state) => state.scene);
-  const setScene = useEditorStore((state) => state.setScene);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setSidebarCollapsed(true);
@@ -27,35 +24,6 @@ export function VfxDesignPage() {
       setSidebarCollapsed(false);
     };
   }, [setSidebarCollapsed]);
-
-  // Restore the persisted design so a refresh doesn't lose the scene.
-  useEffect(() => {
-    if (!project) return;
-    let cancelled = false;
-    setLoading(true);
-    api
-      .get<{ scene?: SceneNode[] }>(
-        `/projects/${encodeURIComponent(project.slug)}/design`,
-      )
-      .then((design) => {
-        if (
-          !cancelled &&
-          Array.isArray(design?.scene) &&
-          design.scene.length > 0
-        ) {
-          setScene(design.scene);
-        }
-      })
-      .catch(() => {
-        // No persisted design yet; keep the default scene.
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [project, setScene]);
 
   // Undo/redo keyboard shortcuts (⌘/Ctrl+Z, ⇧⌘/Ctrl+Shift+Z). Skipped while
   // typing in a field so the browser's native text undo keeps working there.
@@ -82,21 +50,11 @@ export function VfxDesignPage() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  // Auto-save the design (debounced) after any scene change — including when a
-  // GLB is dropped from the file manager.
-  useEffect(() => {
-    if (!project || loading) return;
-    const timer = setTimeout(() => {
-      api
-        .put(`/projects/${encodeURIComponent(project.slug)}/design`, { scene })
-        .catch(() => {
-          // Backend unreachable; the next scene change will retry.
-        });
-    }, 500);
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [project, scene, loading]);
+  // Load the persisted design and live-sync edits over the socket. Local
+  // mutations emit through the store, so no separate autosave is needed.
+  // Hoisted above the early return so the hook count stays stable on first
+  // render (when `project` is still undefined while projects are loading).
+  useDesignSocket(project?.slug ?? null, { editable: true });
 
   if (!project) return null;
 

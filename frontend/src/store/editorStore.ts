@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { SceneNode, SceneNodeType } from "../sdk/types/scene";
+import { designSocket } from "../lib/designSocket";
 
 const DEFAULT_NAMES: Record<SceneNodeType, string> = {
   group: "Group",
@@ -126,6 +127,13 @@ interface EditorState {
   updateNodeParams: (id: string, params: Record<string, unknown>) => void;
   undo: () => void;
   redo: () => void;
+  // Remote-apply actions: update state from a broadcast WITHOUT emitting and
+  // WITHOUT touching undo history (the originating client owns the history).
+  applyNodeAdded: (node: SceneNode) => void;
+  applyNodeRemoved: (id: string) => void;
+  applyNodeRenamed: (id: string, name: string) => void;
+  applyNodePatched: (id: string, params: Record<string, unknown>) => void;
+  applySceneReplaced: (scene: SceneNode[]) => void;
   setScene: (scene: SceneNode[]) => void;
 }
 
@@ -144,25 +152,25 @@ export const useEditorStore = create<EditorState>()((set) => ({
     })),
   clearSelection: () => set({ selectedIds: [] }),
 
-  addNode: (type, params, name) =>
+  addNode: (type, params, name) => {
+    const node: SceneNode = {
+      id: crypto.randomUUID(),
+      name: name ?? DEFAULT_NAMES[type],
+      type,
+      ...(params ? { params } : {}),
+    };
     set((state) => {
       record(state.scene, "add");
       return {
-        scene: [
-          ...state.scene,
-          {
-            id: crypto.randomUUID(),
-            name: name ?? DEFAULT_NAMES[type],
-            type,
-            ...(params ? { params } : {}),
-          },
-        ],
+        scene: [...state.scene, node],
         canUndo: past.length > 0,
         canRedo: future.length > 0,
       };
-    }),
+    });
+    designSocket.emitSceneAdd(node);
+  },
 
-  removeNode: (id) =>
+  removeNode: (id) => {
     set((state) => {
       record(state.scene, "remove");
       return {
@@ -171,9 +179,11 @@ export const useEditorStore = create<EditorState>()((set) => ({
         canUndo: past.length > 0,
         canRedo: future.length > 0,
       };
-    }),
+    });
+    designSocket.emitSceneRemove(id);
+  },
 
-  renameNode: (id, name) =>
+  renameNode: (id, name) => {
     set((state) => {
       record(state.scene, "rename");
       return {
@@ -181,9 +191,11 @@ export const useEditorStore = create<EditorState>()((set) => ({
         canUndo: past.length > 0,
         canRedo: future.length > 0,
       };
-    }),
+    });
+    designSocket.emitSceneRename(id, name);
+  },
 
-  updateNodeParams: (id, params) =>
+  updateNodeParams: (id, params) => {
     set((state) => {
       record(state.scene, "params");
       return {
@@ -191,40 +203,60 @@ export const useEditorStore = create<EditorState>()((set) => ({
         canUndo: past.length > 0,
         canRedo: future.length > 0,
       };
-    }),
+    });
+    designSocket.emitScenePatch(id, params);
+  },
 
-  undo: () =>
-    set((state) => {
-      const previous = past.pop();
-      if (!previous) return {};
-      future.push(state.scene);
-      lastKind = null;
-      lastAt = 0;
-      return {
-        scene: previous,
-        canUndo: past.length > 0,
-        canRedo: true,
-      };
-    }),
+  undo: () => {
+    const previous = past.pop();
+    if (!previous) return;
+    future.push(useEditorStore.getState().scene);
+    lastKind = null;
+    lastAt = 0;
+    set({ scene: previous, canUndo: past.length > 0, canRedo: true });
+    designSocket.emitSceneReplace(previous);
+  },
 
-  redo: () =>
-    set((state) => {
-      const next = future.pop();
-      if (!next) return {};
-      past.push(state.scene);
-      lastKind = null;
-      lastAt = 0;
-      return {
-        scene: next,
-        canUndo: true,
-        canRedo: future.length > 0,
-      };
-    }),
+  redo: () => {
+    const next = future.pop();
+    if (!next) return;
+    past.push(useEditorStore.getState().scene);
+    lastKind = null;
+    lastAt = 0;
+    set({ scene: next, canUndo: true, canRedo: future.length > 0 });
+    designSocket.emitSceneReplace(next);
+  },
 
   setScene: (scene) => {
     resetHistory();
     set({ scene, selectedIds: [], canUndo: false, canRedo: false });
   },
+
+  applyNodeAdded: (node) =>
+    set((state) => ({
+      scene: [...state.scene, node],
+    })),
+
+  applyNodeRemoved: (id) =>
+    set((state) => ({
+      scene: removeRecursive(state.scene, id),
+      selectedIds: state.selectedIds.filter((x) => x !== id),
+    })),
+
+  applyNodeRenamed: (id, name) =>
+    set((state) => ({
+      scene: renameRecursive(state.scene, id, name),
+    })),
+
+  applyNodePatched: (id, params) =>
+    set((state) => ({
+      scene: updateParamsRecursive(state.scene, id, params),
+    })),
+
+  applySceneReplaced: (scene) =>
+    set(() => ({
+      scene,
+    })),
 }));
 
 export function findSceneNode(
