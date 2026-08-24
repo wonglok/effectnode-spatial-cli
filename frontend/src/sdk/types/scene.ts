@@ -4,6 +4,7 @@ export type SceneNodeType =
   | "geometry"
   | "material"
   | "light"
+  | "camera"
   | "model"
   | "environment";
 

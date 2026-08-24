@@ -7,6 +7,7 @@ const DEFAULT_NAMES: Record<SceneNodeType, string> = {
   geometry: "Geometry",
   material: "Material",
   light: "Light",
+  camera: "Camera",
   model: "Model",
   environment: "Environment",
 };
@@ -71,6 +72,19 @@ function findRecursive(
   return undefined;
 }
 
+/** Replace a node by id (recursively), appending it at the root if unknown. */
+function upsertRecursive(nodes: SceneNode[], node: SceneNode): SceneNode[] {
+  const next = nodes.map((n) =>
+    n.id === node.id
+      ? node
+      : {
+          ...n,
+          children: n.children ? upsertRecursive(n.children, node) : undefined,
+        },
+  );
+  return findRecursive(next, node.id) ? next : [...next, node];
+}
+
 interface EditorState {
   scene: SceneNode[];
   selectedIds: string[];
@@ -85,7 +99,11 @@ interface EditorState {
   removeNode: (id: string) => void;
   renameNode: (id: string, name: string) => void;
   updateNodeParams: (id: string, params: Record<string, unknown>) => void;
+  upsertNode: (node: SceneNode) => void;
   setScene: (scene: SceneNode[]) => void;
+  /** Active project slug, set by the design page so gizmos can sync over socket. */
+  projectId: string | null;
+  setProjectId: (projectId: string | null) => void;
 }
 
 export const useEditorStore = create<EditorState>()((set) => ({
@@ -128,7 +146,13 @@ export const useEditorStore = create<EditorState>()((set) => ({
       scene: updateParamsRecursive(state.scene, id, params),
     })),
 
+  upsertNode: (node) =>
+    set((state) => ({ scene: upsertRecursive(state.scene, node) })),
+
   setScene: (scene) => set({ scene, selectedIds: [] }),
+
+  projectId: null,
+  setProjectId: (projectId) => set({ projectId }),
 }));
 
 export function findSceneNode(

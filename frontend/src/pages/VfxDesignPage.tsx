@@ -10,7 +10,6 @@ import {
   deleteSceneNode,
   joinProjectRoom,
   saveSceneNode,
-  sendDesignUpdate,
 } from "../lib/socket";
 import { useEditorStore } from "../store/editorStore";
 import type { SceneNode } from "../sdk/types/scene";
@@ -25,6 +24,7 @@ export function VfxDesignPage() {
   const setSidebarCollapsed = useUiStore((state) => state.setSidebarCollapsed);
   const scene = useEditorStore((state) => state.scene);
   const setScene = useEditorStore((state) => state.setScene);
+  const setProjectId = useEditorStore((state) => state.setProjectId);
   const [loading, setLoading] = useState(true);
   const prevSceneRef = useRef<SceneNode[]>([]);
 
@@ -67,15 +67,10 @@ export function VfxDesignPage() {
   useEffect(() => {
     if (project) {
       joinProjectRoom(project.slug);
+      setProjectId(project.slug);
     }
-  }, [project]);
-
-  // Broadcast every scene change (after the initial load) to the room.
-  useEffect(() => {
-    if (project && !loading) {
-      sendDesignUpdate(project.slug, { scene });
-    }
-  }, [project, scene, loading]);
+    return () => setProjectId(null);
+  }, [project, setProjectId]);
 
   // Auto-save the design (debounced) after any scene change — including when a
   // GLB is dropped from the file manager.

@@ -84,7 +84,7 @@ async function ensureProjectFolder(id: string, slug: string): Promise<string> {
 const SUBFOLDERS = ["db", "assets", "uploads", "json/scene-nodes"] as const;
 
 /** Create the project's db/assets/uploads subfolders (idempotent). */
-async function ensureProjectFolders(id: string): Promise<string> {
+export async function ensureProjectFolders(id: string): Promise<string> {
   const dir = projectDir(id);
   await Promise.all(
     SUBFOLDERS.map((sub) => fs.mkdir(path.join(dir, sub), { recursive: true })),
@@ -92,33 +92,11 @@ async function ensureProjectFolders(id: string): Promise<string> {
   return dir;
 }
 
-async function resolveProject(slug: string): Promise<Project | undefined> {
+export async function resolveProject(
+  slug: string,
+): Promise<Project | undefined> {
   const projects = await loadProjects();
   return projects.find((p) => p.slug === slug);
-}
-
-const DEFAULT_DESIGN = { scene: [] };
-
-/** Load a project's design JSON (returns a default when none exists yet). */
-export async function loadDesign(slug: string): Promise<unknown> {
-  const project = await resolveProject(slug);
-  if (!project) throw new Error("Project not found");
-  await ensureProjectFolders(project.id);
-  return readJson<unknown>(
-    path.join("projects", project.id, "db", "design.json"),
-    DEFAULT_DESIGN,
-  );
-}
-
-/** Persist a project's design JSON. */
-export async function saveDesign(slug: string, design: unknown): Promise<void> {
-  const project = await resolveProject(slug);
-  if (!project) throw new Error("Project not found");
-  await ensureProjectFolders(project.id);
-  await writeJson(
-    path.join("projects", project.id, "db", "design.json"),
-    design,
-  );
 }
 
 function sanitizeFilename(name: string): string {
@@ -334,25 +312,6 @@ projectsRouter.delete("/:projectID", async (req, res) => {
   await fs.rm(projectDir(project.id), { recursive: true, force: true });
 
   res.status(204).end();
-});
-
-// GET /api/projects/:projectID/design — load the project's design JSON.
-projectsRouter.get("/:projectID/design", async (req, res) => {
-  try {
-    res.json(await loadDesign(req.params.projectID));
-  } catch (err) {
-    res.status(404).json({ error: (err as Error).message });
-  }
-});
-
-// PUT /api/projects/:projectID/design — save the project's design JSON.
-projectsRouter.put("/:projectID/design", async (req, res) => {
-  try {
-    await saveDesign(req.params.projectID, req.body);
-    res.json({ ok: true });
-  } catch (err) {
-    res.status(404).json({ error: (err as Error).message });
-  }
 });
 
 // GET /api/projects/:projectID/uploads — list uploaded files.

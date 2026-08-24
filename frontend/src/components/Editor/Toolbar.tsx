@@ -3,6 +3,7 @@ import type { SceneNodeType } from "../../sdk/types/scene";
 import { IconPlus, IconTrash } from "../icons";
 
 const ADD_BUTTONS: { type: SceneNodeType; label: string }[] = [
+  { type: "camera", label: "Camera" },
   { type: "mesh", label: "Mesh" },
   { type: "light", label: "Light" },
   { type: "group", label: "Group" },

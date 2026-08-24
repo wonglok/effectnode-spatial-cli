@@ -11,14 +11,9 @@ export function getSocket(): Socket {
   return socket;
 }
 
-/** Join the per-project room so this client receives realtime design updates. */
+/** Join the per-project room so this client receives realtime scene-node updates. */
 export function joinProjectRoom(projectId: string): void {
   getSocket().emit("project:join", { projectId });
-}
-
-/** Push the current design to the server (persists + broadcasts to the room). */
-export function sendDesignUpdate(projectId: string, design: unknown): void {
-  getSocket().emit("design:update", { projectId, design });
 }
 
 /** Scene-node CRUD over socket.io. */

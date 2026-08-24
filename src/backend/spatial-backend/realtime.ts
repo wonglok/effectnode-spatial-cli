@@ -2,7 +2,6 @@ import type { Server, Socket } from "socket.io";
 import {
   deleteSceneNode,
   listSceneNodes,
-  saveDesign,
   saveSceneNode,
 } from "./routers/projects.js";
 
@@ -15,8 +14,9 @@ function errorMessage(err: unknown): string {
 }
 
 /**
- * Wire up socket.io for realtime sync: per-project rooms, whole-design sync,
- * and per-scene-node CRUD (reads ack, writes broadcast to the room).
+ * Wire up socket.io for realtime scene-node sync: per-project rooms and
+ * per-scene-node CRUD (reads ack, writes broadcast to the room). Whole-design
+ * persistence is handled separately over the REST API.
  */
 export function setupRealtime(io: Server): void {
   io.on("connection", (socket: Socket) => {
@@ -24,21 +24,6 @@ export function setupRealtime(io: Server): void {
       const projectId = (payload as { projectId?: unknown } | null)?.projectId;
       if (typeof projectId === "string" && projectId) {
         socket.join(projectRoom(projectId));
-      }
-    });
-
-    // Whole-design sync (editor pushes, preview follows).
-    socket.on("design:update", async (payload: unknown) => {
-      const { projectId, design } = (payload ?? {}) as {
-        projectId?: unknown;
-        design?: unknown;
-      };
-      if (typeof projectId !== "string" || !projectId) return;
-      try {
-        await saveDesign(projectId, design);
-        io.to(projectRoom(projectId)).emit("design:updated", { design });
-      } catch (err) {
-        socket.emit("design:error", { error: errorMessage(err) });
       }
     });
 

@@ -21,15 +21,19 @@ export function VfxPreviewPage() {
 
     const onConnect = () => setConnected(true);
     const onDisconnect = () => setConnected(false);
-    const onDesignUpdated = (payload: unknown) => {
-      const design = (payload as { design?: { scene?: SceneNode[] } } | null)
-        ?.design;
-      if (design?.scene) setScene(design.scene);
+    const onNodeSaved = (payload: unknown) => {
+      const node = (payload as { node?: SceneNode } | null)?.node;
+      if (node?.id) useEditorStore.getState().upsertNode(node);
+    };
+    const onNodeDeleted = (payload: unknown) => {
+      const nodeId = (payload as { nodeId?: string } | null)?.nodeId;
+      if (nodeId) useEditorStore.getState().removeNode(nodeId);
     };
 
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
-    socket.on("design:updated", onDesignUpdated);
+    socket.on("scene-node:saved", onNodeSaved);
+    socket.on("scene-node:deleted", onNodeDeleted);
 
     // Load the initial design over REST (in case the editor hasn't synced yet).
     api
@@ -40,13 +44,15 @@ export function VfxPreviewPage() {
         if (design?.scene) setScene(design.scene);
       })
       .catch(() => {
-        // No persisted design yet; the editor will broadcast one when it opens.
+        // No persisted design yet; node updates will arrive over socket as the
+        // editor changes.
       });
 
     return () => {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
-      socket.off("design:updated", onDesignUpdated);
+      socket.off("scene-node:saved", onNodeSaved);
+      socket.off("scene-node:deleted", onNodeDeleted);
     };
   }, [projectID, setScene]);
 

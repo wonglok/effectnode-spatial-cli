@@ -148,3 +148,12 @@ export function IconEdit({ className }: IconProps) {
     </Svg>
   );
 }
+
+export function IconCamera({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M4 8h2.5l1.5-2h6l1.5 2H20a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" />
+      <circle cx="12" cy="13" r="3" />
+    </Svg>
+  );
+}

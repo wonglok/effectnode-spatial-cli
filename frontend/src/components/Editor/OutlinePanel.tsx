@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { ComponentType } from "react";
 import { useEditorStore } from "../../store/editorStore";
 import type { SceneNode, SceneNodeType } from "../../sdk/types/scene";
-import { IconAssets, IconEffects, IconFolder, IconMaterials } from "../icons";
+import { IconAssets, IconCamera, IconEffects, IconFolder, IconMaterials } from "../icons";
 import { ChatPanel } from "./ChatPanel";
 
 const TYPE_ICONS: Record<
@@ -14,6 +14,7 @@ const TYPE_ICONS: Record<
   geometry: IconAssets,
   material: IconMaterials,
   light: IconEffects,
+  camera: IconCamera,
   model: IconAssets,
   environment: IconEffects,
 };

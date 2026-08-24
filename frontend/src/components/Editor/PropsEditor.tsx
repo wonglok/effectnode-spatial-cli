@@ -132,6 +132,69 @@ function MaterialParamsSection({ node }: { node: SceneNode }) {
   );
 }
 
+function CameraParamsSection({ node }: { node: SceneNode }) {
+  const updateNodeParams = useEditorStore((state) => state.updateNodeParams);
+  const params = node.params ?? {};
+  const fov = typeof params.fov === "number" ? params.fov : 50;
+  const near = typeof params.near === "number" ? params.near : 0.1;
+  const far = typeof params.far === "number" ? params.far : 1000;
+
+  const inputClass =
+    "mt-1 w-full rounded-md border border-ink-200 bg-white px-2.5 py-1.5 text-sm text-ink-800 outline-none transition focus:border-tiffany-400 focus:ring-2 focus:ring-tiffany-300/40";
+
+  return (
+    <section className="space-y-4">
+      <h3 className="text-xs font-semibold text-ink-500">Camera</h3>
+
+      <label className="block">
+        <span className="text-[11px] font-medium text-ink-500">FOV (°)</span>
+        <input
+          type="number"
+          min={1}
+          max={179}
+          step={1}
+          value={fov}
+          onChange={(e) => {
+            const n = Number(e.target.value);
+            if (!Number.isNaN(n)) updateNodeParams(node.id, { fov: n });
+          }}
+          className={inputClass}
+        />
+      </label>
+
+      <label className="block">
+        <span className="text-[11px] font-medium text-ink-500">Near</span>
+        <input
+          type="number"
+          min={0.0001}
+          step={0.01}
+          value={near}
+          onChange={(e) => {
+            const n = Number(e.target.value);
+            if (!Number.isNaN(n)) updateNodeParams(node.id, { near: n });
+          }}
+          className={inputClass}
+        />
+      </label>
+
+      <label className="block">
+        <span className="text-[11px] font-medium text-ink-500">Far</span>
+        <input
+          type="number"
+          min={0.0001}
+          step={0.01}
+          value={far}
+          onChange={(e) => {
+            const n = Number(e.target.value);
+            if (!Number.isNaN(n)) updateNodeParams(node.id, { far: n });
+          }}
+          className={inputClass}
+        />
+      </label>
+    </section>
+  );
+}
+
 function EnvironmentParamsSection({ node }: { node: SceneNode }) {
   const updateNodeParams = useEditorStore((state) => state.updateNodeParams);
   const params = node.params ?? {};
@@ -337,9 +400,7 @@ export function PropsEditor() {
   const selectedIds = useEditorStore((state) => state.selectedIds);
   const renameNode = useEditorStore((state) => state.renameNode);
   const node =
-    selectedIds.length === 1
-      ? findSceneNode(scene, selectedIds[0])
-      : undefined;
+    selectedIds.length === 1 ? findSceneNode(scene, selectedIds[0]) : undefined;
 
   return (
     <aside className="flex w-72 shrink-0 flex-col border-l border-ink-200 bg-white">
@@ -377,6 +438,13 @@ export function PropsEditor() {
               <TransformSection node={node} />
               <ColliderSection node={node} />
               <UserDataSection node={node} />
+            </>
+          )}
+
+          {node.type === "camera" && (
+            <>
+              <CameraParamsSection node={node} />
+              <TransformSection node={node} />
             </>
           )}
 

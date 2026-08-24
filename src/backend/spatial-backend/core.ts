@@ -16,6 +16,7 @@ import { homedir } from "node:os";
 import express from "express";
 import cors from "cors";
 import { projectsRouter } from "./routers/projects.js";
+import { designRouter } from "./routers/design.js";
 import { Server } from "socket.io";
 import { setupRealtime } from "./realtime.js";
 // import { renderMediaRoutes } from "./render-media.js";
@@ -91,6 +92,7 @@ export async function runSetup({
   });
 
   app.use("/api/projects", projectsRouter);
+  app.use("/api/projects", designRouter);
 
   const server = createServer(app);
   const io = new Server(server, {

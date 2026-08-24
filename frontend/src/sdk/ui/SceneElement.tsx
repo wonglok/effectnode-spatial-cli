@@ -110,6 +110,22 @@ export function SceneElement({ node }: { node: SceneNode }) {
     }
     case "light":
       return <ambientLight {...transformProps(node)} />;
+    case "camera": {
+      const params = node.params ?? {};
+      const fov = typeof params.fov === "number" ? params.fov : 50;
+      const near = typeof params.near === "number" ? params.near : 0.1;
+      const far = typeof params.far === "number" ? params.far : 1000;
+      return (
+        <perspectiveCamera
+          {...transformProps(node)}
+          fov={fov}
+          near={near}
+          far={far}
+        >
+          {children}
+        </perspectiveCamera>
+      );
+    }
     default:
       return null;
   }

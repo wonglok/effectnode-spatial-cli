@@ -3,6 +3,7 @@ import * as THREE from "three/webgpu";
 import { useThree } from "@react-three/fiber";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { findSceneNode, useEditorStore } from "../../store/editorStore";
+import { saveSceneNode } from "../../lib/socket";
 import type { SceneNode } from "../types/scene";
 import { readVec3 } from "../types/vec3";
 
@@ -103,14 +104,25 @@ export function TransformGizmo() {
 
       const totalDelta = pivot.position.clone().sub(start.pivot);
       const store = useEditorStore.getState();
+      const { projectId } = store;
       for (const [id, initial] of start.positions) {
-        store.updateNodeParams(id, {
-          position: [
-            initial[0] + totalDelta.x,
-            initial[1] + totalDelta.y,
-            initial[2] + totalDelta.z,
-          ],
-        });
+        const position: [number, number, number] = [
+          initial[0] + totalDelta.x,
+          initial[1] + totalDelta.y,
+          initial[2] + totalDelta.z,
+        ];
+        store.updateNodeParams(id, { position });
+
+        // Push the live position to the room so other browsers follow the drag.
+        if (projectId) {
+          const node = findSceneNode(store.scene, id);
+          if (node) {
+            saveSceneNode(projectId, {
+              ...node,
+              params: { ...node.params, position },
+            });
+          }
+        }
       }
     };
 
