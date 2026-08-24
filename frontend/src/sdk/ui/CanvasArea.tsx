@@ -18,7 +18,7 @@ export function CanvasArea({
     <WebGPUCanvas>
       {scene.map((node) => {
         return (
-          <Suspense fallback={null}>
+          <Suspense fallback={null} key={node.id + "sus"}>
             <SceneElement key={node.id} node={node} />
           </Suspense>
         );
