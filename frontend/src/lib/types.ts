@@ -19,3 +19,10 @@ export interface Project {
   accent: AccentKey;
   stats: ProjectStats;
 }
+
+export interface SceneMetadata {
+  slug: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}

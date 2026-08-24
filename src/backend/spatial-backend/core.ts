@@ -16,6 +16,7 @@ import { homedir } from "node:os";
 import express from "express";
 import cors from "cors";
 import { projectsRouter } from "./routers/projects/index.js";
+import { scenesRouter } from "./routers/scenes.js";
 import { attachDesignSocket } from "./design-socket.js";
 // import { renderMediaRoutes } from "./render-media.js";
 // import { agentBackend } from "./agent/agent-backend.js";
@@ -90,6 +91,7 @@ export async function runSetup({
   });
 
   app.use("/api/projects", projectsRouter);
+  app.use("/api/projects", scenesRouter);
 
   const server = createServer(app);
 

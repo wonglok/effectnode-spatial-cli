@@ -158,10 +158,10 @@ export function ProjectDashboardPage() {
         <h2 className="text-base font-semibold text-ink-900">Quick actions</h2>
         <div className="mt-3 flex flex-wrap gap-2.5">
           <Link
-            to={`${base}/vfx-design`}
+            to={`${base}/scenes`}
             className="btn-secondary inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium"
           >
-            <IconPlus className="h-4 w-4" /> New effect
+            <IconPlus className="h-4 w-4" /> New scene
           </Link>
           <Link
             to={`${base}/export`}

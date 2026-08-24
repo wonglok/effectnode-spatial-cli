@@ -9,7 +9,9 @@ import { printExampleUsage } from "./backend/spatial-backend/cli/usage.js";
 import {
   sceneAdd,
   sceneClear,
+  sceneCreate,
   sceneGet,
+  sceneList,
   sceneRemove,
   sceneRename,
   sceneSet,
@@ -91,12 +93,19 @@ program
 
 const scene = program
   .command("scene")
-  .description("Read or edit a project's scene graph (headless, JSON in/out)");
+  .description("Manage and edit scenes (headless, JSON in/out)");
 
 scene
-  .command("get <slug>")
-  .description("Print the scene nodes as a JSON array")
-  .action(run(async (slug: string) => sceneGet(slug)));
+  .command("list <project>")
+  .description("List scenes in a project as JSON")
+  .action(run(async (project: string) => sceneList(project)));
+
+scene
+  .command("create <project> <name>")
+  .description("Create a scene in a project")
+  .action(
+    run(async (project: string, name: string) => sceneCreate(project, name)),
+  );
 
 scene
   .command("template [type]")
@@ -104,39 +113,61 @@ scene
   .action(run(async (type?: string) => sceneTemplate(type)));
 
 scene
-  .command("set <slug>")
+  .command("get <project> <scene>")
+  .description("Print the scene nodes as a JSON array")
+  .action(
+    run(async (project: string, scene: string) => sceneGet(project, scene)),
+  );
+
+scene
+  .command("set <project> <scene>")
   .description(
     "Replace the whole scene (JSON array via --json, --file, or stdin)",
   )
   .option("--json <json>", "inline JSON")
   .option("--file <path>", "read JSON from a file")
-  .action(run(async (slug: string, opts) => sceneSet(slug, opts)));
-
-scene
-  .command("add <slug>")
-  .description("Append a node (JSON object via --json, --file, or stdin)")
-  .option("--json <json>", "inline JSON")
-  .option("--file <path>", "read JSON from a file")
-  .action(run(async (slug: string, opts) => sceneAdd(slug, opts)));
-
-scene
-  .command("remove <slug> <id>")
-  .description("Remove a node (and its descendants) by id")
-  .action(run(async (slug: string, id: string) => sceneRemove(slug, id)));
-
-scene
-  .command("rename <slug> <id> <name>")
-  .description("Rename a node by id")
   .action(
-    run(async (slug: string, id: string, name: string) =>
-      sceneRename(slug, id, name),
+    run(async (project: string, scene: string, opts) =>
+      sceneSet(project, scene, opts),
     ),
   );
 
 scene
-  .command("clear <slug>")
+  .command("add <project> <scene>")
+  .description("Append a node (JSON object via --json, --file, or stdin)")
+  .option("--json <json>", "inline JSON")
+  .option("--file <path>", "read JSON from a file")
+  .action(
+    run(async (project: string, scene: string, opts) =>
+      sceneAdd(project, scene, opts),
+    ),
+  );
+
+scene
+  .command("remove <project> <scene> <id>")
+  .description("Remove a node (and its descendants) by id")
+  .action(
+    run(async (project: string, scene: string, id: string) =>
+      sceneRemove(project, scene, id),
+    ),
+  );
+
+scene
+  .command("rename <project> <scene> <id> <name>")
+  .description("Rename a node by id")
+  .action(
+    run(
+      async (project: string, scene: string, id: string, name: string) =>
+        sceneRename(project, scene, id, name),
+    ),
+  );
+
+scene
+  .command("clear <project> <scene>")
   .description("Reset the scene to empty")
-  .action(run(async (slug: string) => sceneClear(slug)));
+  .action(
+    run(async (project: string, scene: string) => sceneClear(project, scene)),
+  );
 
 // --- start (default) ----------------------------------------------------------
 

@@ -1,5 +1,4 @@
 import { Server, type Socket } from "socket.io";
-import { loadDesign, saveDesign } from "./routers/design.js";
 import {
   type Design,
   type SceneNode,
@@ -8,18 +7,20 @@ import {
   renameNode,
   patchNode,
 } from "./scene.js";
+import { loadSceneDesign, saveSceneDesign } from "./scenes.js";
 
 // ---------------------------------------------------------------------------
-// Socket.io design API — replaces the REST design object
-// (GET/PUT /api/projects/:projectID/design).
+// Socket.io scene API — live sync of a scene's design between the editor and
+// the server (which persists to projects/<id>/scenes/<slug>/design.json).
 //
-// Each project lives in a room named `design:<slug>`. Mutations are applied to
-// an in-memory authoritative copy, debounced-persisted to disk, then broadcast
-// to the OTHER sockets in the room (the sender already applied the change).
+// Each scene lives in a room named `scene:<project>:<scene>`. Mutations are
+// applied to an in-memory authoritative copy, debounced-persisted to disk,
+// then broadcast to the OTHER sockets in the room (the sender already applied
+// the change).
 //
 // Trust model: this is a single-user local tool with no user accounts or
-// sessions (matching the REST API it replaces), so the client-supplied slug is
-// trusted as-is and CORS reflects the connecting origin. Do NOT deploy this
+// sessions (matching the REST API it replaces), so the client-supplied slugs
+// are trusted as-is and CORS reflects the connecting origin. Do NOT deploy this
 // multi-tenant without handshake auth + per-event project authorization.
 // ---------------------------------------------------------------------------
 
@@ -28,67 +29,77 @@ interface CachedDesign {
   saveTimer?: ReturnType<typeof setTimeout>;
 }
 
-/** Debounce window for persisting a design to disk (ms). */
 const SAVE_DEBOUNCE_MS = 400;
 
-/** In-memory authoritative design per slug (per-process). */
 const designs = new Map<string, CachedDesign>();
 
-const roomName = (slug: string): string => `design:${slug}`;
+const roomName = (project: string, scene: string): string =>
+  `scene:${project}:${scene}`;
+
+const cacheKey = (project: string, scene: string): string =>
+  `${project}:${scene}`;
 
 // --- payload types (mirror the frontend emit shapes) ------------------------
 
 interface JoinPayload {
   project: string;
+  scene: string;
 }
 
 interface AddPayload {
   project: string;
+  scene: string;
   node: SceneNode;
 }
 
 interface RemovePayload {
   project: string;
+  scene: string;
   id: string;
 }
 
 interface RenamePayload {
   project: string;
+  scene: string;
   id: string;
   name: string;
 }
 
 interface PatchPayload {
   project: string;
+  scene: string;
   id: string;
   params: Record<string, unknown>;
 }
 
 interface ReplacePayload {
   project: string;
-  scene: SceneNode[];
+  scene: string;
+  nodes: SceneNode[];
 }
 
 // --- cache / persistence -----------------------------------------------------
 
-/** Return the cached design for a slug, loading and caching it on first use. */
-async function getOrLoadDesign(slug: string): Promise<Design> {
-  const cached = designs.get(slug);
+/** Return the cached design for a scene, loading and caching it on first use. */
+async function getOrLoadDesign(project: string, scene: string): Promise<Design> {
+  const key = cacheKey(project, scene);
+  const cached = designs.get(key);
   if (cached) return cached.design;
-  const design = await loadDesign(slug);
-  designs.set(slug, { design });
+  const design = await loadSceneDesign(project, scene);
+  designs.set(key, { design });
   return design;
 }
 
-/** Debounced persist of the in-memory design for a slug (400ms). */
-function scheduleSave(slug: string): void {
-  const cached = designs.get(slug);
+/** Debounced persist of the in-memory design for a scene (400ms). */
+function scheduleSave(project: string, scene: string): void {
+  const key = cacheKey(project, scene);
+  const cached = designs.get(key);
   if (!cached) return;
   if (cached.saveTimer) clearTimeout(cached.saveTimer);
   cached.saveTimer = setTimeout(() => {
     cached.saveTimer = undefined;
-    void saveDesign(slug, cached.design).catch((err: unknown) => {
-      console.error(`Failed to persist design for "${slug}":`, err);
+    void saveSceneDesign(project, scene, cached.design).catch((err: unknown) => {
+      console.error(`Failed to persist scene "${project}/${scene}":`, err);
     });
   }, SAVE_DEBOUNCE_MS);
 }
@@ -96,8 +107,8 @@ function scheduleSave(slug: string): void {
 // --- event handlers ----------------------------------------------------------
 
 async function handleJoin(socket: Socket, payload: JoinPayload): Promise<void> {
-  const design = await getOrLoadDesign(payload.project);
-  socket.join(roomName(payload.project));
+  const design = await getOrLoadDesign(payload.project, payload.scene);
+  socket.join(roomName(payload.project, payload.scene));
   socket.emit("design:state", { design });
 }
 
@@ -105,11 +116,11 @@ async function handleSceneAdd(
   socket: Socket,
   payload: AddPayload,
 ): Promise<void> {
-  const design = await getOrLoadDesign(payload.project);
+  const design = await getOrLoadDesign(payload.project, payload.scene);
   design.scene = addNode(design.scene, payload.node);
-  scheduleSave(payload.project);
+  scheduleSave(payload.project, payload.scene);
   socket
-    .to(roomName(payload.project))
+    .to(roomName(payload.project, payload.scene))
     .emit("scene:added", { node: payload.node });
 }
 
@@ -117,21 +128,23 @@ async function handleSceneRemove(
   socket: Socket,
   payload: RemovePayload,
 ): Promise<void> {
-  const design = await getOrLoadDesign(payload.project);
+  const design = await getOrLoadDesign(payload.project, payload.scene);
   design.scene = removeNode(design.scene, payload.id);
-  scheduleSave(payload.project);
-  socket.to(roomName(payload.project)).emit("scene:removed", { id: payload.id });
+  scheduleSave(payload.project, payload.scene);
+  socket
+    .to(roomName(payload.project, payload.scene))
+    .emit("scene:removed", { id: payload.id });
 }
 
 async function handleSceneRename(
   socket: Socket,
   payload: RenamePayload,
 ): Promise<void> {
-  const design = await getOrLoadDesign(payload.project);
+  const design = await getOrLoadDesign(payload.project, payload.scene);
   design.scene = renameNode(design.scene, payload.id, payload.name);
-  scheduleSave(payload.project);
+  scheduleSave(payload.project, payload.scene);
   socket
-    .to(roomName(payload.project))
+    .to(roomName(payload.project, payload.scene))
     .emit("scene:renamed", { id: payload.id, name: payload.name });
 }
 
@@ -139,11 +152,11 @@ async function handleScenePatch(
   socket: Socket,
   payload: PatchPayload,
 ): Promise<void> {
-  const design = await getOrLoadDesign(payload.project);
+  const design = await getOrLoadDesign(payload.project, payload.scene);
   design.scene = patchNode(design.scene, payload.id, payload.params);
-  scheduleSave(payload.project);
+  scheduleSave(payload.project, payload.scene);
   socket
-    .to(roomName(payload.project))
+    .to(roomName(payload.project, payload.scene))
     .emit("scene:patched", { id: payload.id, params: payload.params });
 }
 
@@ -151,12 +164,12 @@ async function handleSceneReplace(
   socket: Socket,
   payload: ReplacePayload,
 ): Promise<void> {
-  const design = await getOrLoadDesign(payload.project);
-  design.scene = payload.scene;
-  scheduleSave(payload.project);
+  const design = await getOrLoadDesign(payload.project, payload.scene);
+  design.scene = payload.nodes;
+  scheduleSave(payload.project, payload.scene);
   socket
-    .to(roomName(payload.project))
-    .emit("scene:replaced", { scene: payload.scene });
+    .to(roomName(payload.project, payload.scene))
+    .emit("scene:replaced", { nodes: payload.nodes });
 }
 
 /** Run an async handler, logging any rejection (avoids unhandled rejections). */

@@ -3,12 +3,12 @@ import { CanvasArea } from "../sdk/ui/CanvasArea";
 import { useEditorStore } from "../store/editorStore";
 import { useDesignSocket } from "../lib/designSocket";
 
-export function VfxPreviewPage() {
-  const { projectID } = useParams();
+export function ScenePreviewPage() {
+  const { projectID, sceneSlug } = useParams();
   const scene = useEditorStore((state) => state.scene);
 
   // Live-sync the persisted design over the socket (read-only preview).
-  useDesignSocket(projectID ?? null, { editable: false });
+  useDesignSocket(projectID ?? null, sceneSlug ?? null, { editable: false });
 
   return (
     <div className="flex h-screen relative flex-col bg-white">

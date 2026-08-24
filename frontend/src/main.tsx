@@ -7,8 +7,9 @@ import { ProjectLayout } from "./components/Projects/ProjectLayout";
 import { ProjectDashboardPage } from "./pages/ProjectDashboardPage";
 import { ProjectPage } from "./pages/ProjectPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
-import { VfxDesignPage } from "./pages/VfxDesignPage";
-import { VfxPreviewPage } from "./pages/VfxPreviewPage";
+import { SceneEditorPage } from "./pages/SceneEditorPage";
+import { ScenePreviewPage } from "./pages/ScenePreviewPage";
+import { ScenesPage } from "./pages/ScenesPage";
 import { WelcomePage } from "./pages/WelcomePage";
 import { useProjectsStore } from "./store/projectsStore";
 import { ColumnLayout } from "./components/Projects/ColumnLayout";
@@ -32,8 +33,8 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/projects" element={<ProjectsPage />} />
 
       <Route
-        path="/projects/:projectID/vfx-preview"
-        element={<VfxPreviewPage />}
+        path="/projects/:projectID/scenes/:sceneSlug/preview"
+        element={<ScenePreviewPage />}
       />
 
       <Route path="/projects/:projectID" element={<ProjectLayout />}>
@@ -46,7 +47,8 @@ createRoot(document.getElementById("root")!).render(
           }
         />
 
-        <Route path="vfx-design" element={<VfxDesignPage />} />
+        <Route path="scenes" element={<ScenesPage />} />
+        <Route path="scenes/:sceneSlug" element={<SceneEditorPage />} />
 
         <Route
           path=":page"

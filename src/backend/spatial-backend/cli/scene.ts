@@ -1,5 +1,10 @@
 import { readFileSync } from "node:fs";
-import { loadDesign, saveDesign } from "../routers/design.js";
+import {
+  createScene,
+  listScenes,
+  loadSceneDesign,
+  saveSceneDesign,
+} from "../scenes.js";
 import {
   addNode,
   coerceNode,
@@ -45,59 +50,74 @@ async function readStdin(): Promise<string> {
   return Buffer.concat(chunks).toString("utf-8");
 }
 
-export async function sceneGet(slug: string): Promise<void> {
-  const design = await loadDesign(slug);
+export async function sceneList(project: string): Promise<void> {
+  console.log(JSON.stringify(await listScenes(project), null, 2));
+}
+
+export async function sceneCreate(project: string, name: string): Promise<void> {
+  console.log(JSON.stringify(await createScene(project, name), null, 2));
+}
+
+export async function sceneGet(project: string, scene: string): Promise<void> {
+  const design = await loadSceneDesign(project, scene);
   console.log(JSON.stringify(design.scene, null, 2));
 }
 
 export async function sceneSet(
-  slug: string,
+  project: string,
+  scene: string,
   options: JsonInputOptions,
 ): Promise<void> {
   const input = await readJsonInput(options);
   if (!isSceneArray(input)) {
     throw new Error("Expected a JSON array of scene nodes");
   }
-  const design = await loadDesign(slug);
+  const design = await loadSceneDesign(project, scene);
   design.scene = input;
-  await saveDesign(slug, design);
+  await saveSceneDesign(project, scene, design);
   console.log(`Scene set (${input.length} nodes)`);
 }
 
 export async function sceneAdd(
-  slug: string,
+  project: string,
+  scene: string,
   options: JsonInputOptions,
 ): Promise<void> {
   const node = coerceNode(await readJsonInput(options));
-  const design = await loadDesign(slug);
+  const design = await loadSceneDesign(project, scene);
   design.scene = addNode(design.scene, node);
-  await saveDesign(slug, design);
+  await saveSceneDesign(project, scene, design);
   // Echo the full node (including the generated id) so the agent can reference it.
   console.log(JSON.stringify(node, null, 2));
 }
 
-export async function sceneRemove(slug: string, id: string): Promise<void> {
-  const design = await loadDesign(slug);
+export async function sceneRemove(
+  project: string,
+  scene: string,
+  id: string,
+): Promise<void> {
+  const design = await loadSceneDesign(project, scene);
   design.scene = removeNode(design.scene, id);
-  await saveDesign(slug, design);
+  await saveSceneDesign(project, scene, design);
   console.log(`Removed node ${id}`);
 }
 
 export async function sceneRename(
-  slug: string,
+  project: string,
+  scene: string,
   id: string,
   name: string,
 ): Promise<void> {
-  const design = await loadDesign(slug);
+  const design = await loadSceneDesign(project, scene);
   design.scene = renameNode(design.scene, id, name);
-  await saveDesign(slug, design);
+  await saveSceneDesign(project, scene, design);
   console.log(`Renamed ${id} -> ${name}`);
 }
 
-export async function sceneClear(slug: string): Promise<void> {
-  const design = await loadDesign(slug);
+export async function sceneClear(project: string, scene: string): Promise<void> {
+  const design = await loadSceneDesign(project, scene);
   design.scene = [];
-  await saveDesign(slug, design);
+  await saveSceneDesign(project, scene, design);
   console.log("Scene cleared");
 }
 

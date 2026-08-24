@@ -59,7 +59,7 @@ export async function ensureProjectFolder(
   return dir;
 }
 
-const SUBFOLDERS = ["db", "assets", "uploads"] as const;
+const SUBFOLDERS = ["db", "assets", "uploads", "scenes"] as const;
 
 /** Create the project's db/assets/uploads subfolders (idempotent). */
 export async function ensureProjectFolders(id: string): Promise<string> {

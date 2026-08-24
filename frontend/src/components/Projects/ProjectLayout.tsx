@@ -21,7 +21,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { segment: "", label: "Dashboard", icon: IconDashboard, end: true },
-  { segment: "vfx-design", label: "VFX Editor", icon: IconEffects },
+  { segment: "scenes", label: "Scene Editor", icon: IconEffects },
   // { segment: "materials", label: "Materials", icon: IconMaterials },
   // { segment: "assets", label: "Assets", icon: IconAssets },
   { segment: "export", label: "Export .enfx", icon: IconExport },

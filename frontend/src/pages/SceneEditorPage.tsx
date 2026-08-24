@@ -10,8 +10,8 @@ import { useProjectsStore } from "../store/projectsStore";
 import { useUiStore } from "../store/uiStore";
 import { useDesignSocket } from "../lib/designSocket";
 
-export function VfxDesignPage() {
-  const { projectID } = useParams();
+export function SceneEditorPage() {
+  const { projectID, sceneSlug } = useParams();
   const project = useProjectsStore((state) =>
     state.projects.find((p) => p.slug === projectID),
   );
@@ -54,7 +54,7 @@ export function VfxDesignPage() {
   // mutations emit through the store, so no separate autosave is needed.
   // Hoisted above the early return so the hook count stays stable on first
   // render (when `project` is still undefined while projects are loading).
-  useDesignSocket(project?.slug ?? null, { editable: true });
+  useDesignSocket(project?.slug ?? null, sceneSlug ?? null, { editable: true });
 
   if (!project) return null;
 

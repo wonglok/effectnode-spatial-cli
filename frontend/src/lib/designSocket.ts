@@ -19,6 +19,7 @@ export interface DesignSocketHandlers {
 // forward to the currently active handlers.
 let socket: Socket | null = null;
 let currentProject: string | null = null;
+let currentScene: string | null = null;
 let handlers: DesignSocketHandlers | null = null;
 
 function ensureSocket(): Socket {
@@ -43,8 +44,8 @@ function ensureSocket(): Socket {
       handlers?.onNodePatched(payload.id, payload.params);
     },
   );
-  socket.on("scene:replaced", (payload: { scene: SceneNode[] }) => {
-    handlers?.onSceneReplaced(payload.scene);
+  socket.on("scene:replaced", (payload: { nodes: SceneNode[] }) => {
+    handlers?.onSceneReplaced(payload.nodes);
   });
 
   return socket;
@@ -52,61 +53,87 @@ function ensureSocket(): Socket {
 
 export function connectDesignSocket(
   project: string,
+  scene: string,
   h: DesignSocketHandlers,
 ): void {
   handlers = h;
   currentProject = project;
-  ensureSocket().emit("design:join", { project });
+  currentScene = scene;
+  ensureSocket().emit("design:join", { project, scene });
 }
 
 export function disconnectDesignSocket(): void {
   // Drop the connection so the socket leaves every room it joined. This keeps a
-  // stale room (from a previous project) from leaking its broadcasts into the
-  // next project's handlers when navigating between projects.
+  // stale room (from a previous project/scene) from leaking its broadcasts into
+  // the next scene's handlers when navigating between projects/scenes.
   handlers = null;
   currentProject = null;
+  currentScene = null;
   socket?.disconnect();
   socket = null;
 }
 
 export const designSocket = {
   emitSceneAdd(node: SceneNode): void {
-    if (!socket || !currentProject) return;
-    socket.emit("scene:add", { project: currentProject, node });
+    if (!socket || !currentProject || !currentScene) return;
+    socket.emit("scene:add", {
+      project: currentProject,
+      scene: currentScene,
+      node,
+    });
   },
   emitSceneRemove(id: string): void {
-    if (!socket || !currentProject) return;
-    socket.emit("scene:remove", { project: currentProject, id });
+    if (!socket || !currentProject || !currentScene) return;
+    socket.emit("scene:remove", {
+      project: currentProject,
+      scene: currentScene,
+      id,
+    });
   },
   emitSceneRename(id: string, name: string): void {
-    if (!socket || !currentProject) return;
-    socket.emit("scene:rename", { project: currentProject, id, name });
+    if (!socket || !currentProject || !currentScene) return;
+    socket.emit("scene:rename", {
+      project: currentProject,
+      scene: currentScene,
+      id,
+      name,
+    });
   },
   emitScenePatch(id: string, params: Record<string, unknown>): void {
-    if (!socket || !currentProject) return;
-    socket.emit("scene:patch", { project: currentProject, id, params });
+    if (!socket || !currentProject || !currentScene) return;
+    socket.emit("scene:patch", {
+      project: currentProject,
+      scene: currentScene,
+      id,
+      params,
+    });
   },
-  emitSceneReplace(scene: SceneNode[]): void {
-    if (!socket || !currentProject) return;
-    socket.emit("scene:replace", { project: currentProject, scene });
+  emitSceneReplace(nodes: SceneNode[]): void {
+    if (!socket || !currentProject || !currentScene) return;
+    socket.emit("scene:replace", {
+      project: currentProject,
+      scene: currentScene,
+      nodes,
+    });
   },
 };
 
 export function useDesignSocket(
   project: string | null,
+  scene: string | null,
   opts: { editable: boolean },
 ): void {
   useEffect(() => {
-    if (!project) return;
+    if (!project || !scene) return;
     const store = useEditorStore.getState();
-    connectDesignSocket(project, {
+    connectDesignSocket(project, scene, {
       onState: (design) => store.setScene(design.scene),
       onNodeAdded: (node) => store.applyNodeAdded(node),
       onNodeRemoved: (id) => store.applyNodeRemoved(id),
       onNodeRenamed: (id, name) => store.applyNodeRenamed(id, name),
       onNodePatched: (id, params) => store.applyNodePatched(id, params),
-      onSceneReplaced: (scene) => store.applySceneReplaced(scene),
+      onSceneReplaced: (nodes) => store.applySceneReplaced(nodes),
     });
     return () => disconnectDesignSocket();
-  }, [project, opts.editable]);
+  }, [project, scene, opts.editable]);
 }
