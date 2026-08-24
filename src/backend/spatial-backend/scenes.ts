@@ -36,6 +36,16 @@ const scenesAbs = (id: string): string => path.join(projectDir(id), "scenes");
 const sceneAbs = (id: string, slug: string): string =>
   path.join(scenesAbs(id), slug);
 
+// Slug format produced by slugify(). Reject anything else so a user-supplied
+// scene slug (URL param / socket payload) can't traverse out of the scenes dir.
+const SCENE_SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
+
+function assertSceneSlug(slug: string): void {
+  if (!SCENE_SLUG_RE.test(slug)) {
+    throw new Error(`Invalid scene slug: ${slug}`);
+  }
+}
+
 async function resolveProjectId(slug: string): Promise<string> {
   const project = await resolveProject(slug);
   if (!project) throw new Error("Project not found");
@@ -127,6 +137,7 @@ export async function renameScene(
   sceneSlug: string,
   name: string,
 ): Promise<SceneMetadata> {
+  assertSceneSlug(sceneSlug);
   const id = await resolveProjectId(projectSlug);
   const meta = await readJson<SceneMetadata | null>(
     metadataRel(id, sceneSlug),
@@ -146,6 +157,7 @@ export async function deleteScene(
   projectSlug: string,
   sceneSlug: string,
 ): Promise<void> {
+  assertSceneSlug(sceneSlug);
   const id = await resolveProjectId(projectSlug);
   await fs.rm(sceneAbs(id, sceneSlug), { recursive: true, force: true });
 }
@@ -154,6 +166,7 @@ export async function loadSceneDesign(
   projectSlug: string,
   sceneSlug: string,
 ): Promise<Design> {
+  assertSceneSlug(sceneSlug);
   const id = await resolveProjectId(projectSlug);
   await migrateLegacyDesign(id);
   return readJson<Design>(designRel(id, sceneSlug), DEFAULT_DESIGN);
@@ -164,6 +177,7 @@ export async function saveSceneDesign(
   sceneSlug: string,
   design: Design,
 ): Promise<void> {
+  assertSceneSlug(sceneSlug);
   const id = await resolveProjectId(projectSlug);
   await writeJson(designRel(id, sceneSlug), design);
   const meta = await readJson<SceneMetadata | null>(
