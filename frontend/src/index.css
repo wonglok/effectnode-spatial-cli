@@ -168,3 +168,7 @@ pre,
   background: #f3f7f7;
   border-color: #b0c3c8;
 }
+
+.tsl-graph-content {
+  height: 100%;
+}

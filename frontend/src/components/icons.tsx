@@ -175,3 +175,22 @@ export function IconCamera({ className }: IconProps) {
     </Svg>
   );
 }
+
+export function IconCode({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M8 7l-5 5 5 5" />
+      <path d="M16 7l5 5-5 5" />
+      <path d="M13.5 4l-3 16" />
+    </Svg>
+  );
+}
+
+export function IconChat({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.6 0-3.1-.4-4.4-1.2L3 20l1.2-5.1A8.5 8.5 0 1 1 21 11.5z" />
+      <path d="M8 11h.01M12 11h.01M16 11h.01" />
+    </Svg>
+  );
+}

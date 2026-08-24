@@ -1,8 +1,29 @@
-import { useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
-import { IconChevronLeft, IconMaterials } from "../components/icons";
+import { useEffect, type ComponentType } from "react";
+import { Link, NavLink, Outlet, useParams } from "react-router-dom";
+import {
+  IconAssets,
+  IconChat,
+  IconChevronLeft,
+  IconCode,
+  IconEffects,
+  IconMaterials,
+} from "../components/icons";
 import { useProjectsStore } from "../store/projectsStore";
 import { useMaterialsStore } from "../store/materialsStore";
+
+interface Tab {
+  segment: string;
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+}
+
+const TABS: Tab[] = [
+  { segment: "glb-viewer", label: "GLB Viewer", icon: IconAssets },
+  { segment: "buffers", label: "Buffers", icon: IconMaterials },
+  { segment: "ai-chat", label: "AI Chat", icon: IconChat },
+  { segment: "tsl-code-editor", label: "TSL Code", icon: IconCode },
+  { segment: "graph-editor", label: "Graph Editor", icon: IconEffects },
+];
 
 export function MaterialEditorPage() {
   const { projectID, materialSlug } = useParams();
@@ -24,6 +45,7 @@ export function MaterialEditorPage() {
   if (!project) return null;
 
   const base = `/projects/${project.slug}`;
+  const materialBase = `${base}/materials/${materialSlug}`;
 
   if (status !== "loading" && !material) {
     return (
@@ -49,6 +71,7 @@ export function MaterialEditorPage() {
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
+      {/* Header */}
       <div className="flex shrink-0 items-center justify-between gap-4 border-b border-ink-200 bg-white px-6 py-3">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-tiffany-50 text-tiffany-600">
@@ -72,17 +95,30 @@ export function MaterialEditorPage() {
         </Link>
       </div>
 
-      <div className="flex min-h-0 flex-1 items-center justify-center bg-ink-50 p-6">
-        <div className="card max-w-md rounded-xl px-6 py-16 text-center">
-          <IconMaterials className="mx-auto h-12 w-12 text-ink-300" />
-          <h2 className="mt-4 text-base font-semibold text-ink-900">
-            Material editor
-          </h2>
-          <p className="mt-1.5 text-sm leading-relaxed text-ink-600">
-            The TSL node graph editor for “{material?.name ?? materialSlug}”
-            will live here. This section is coming soon.
-          </p>
-        </div>
+      {/* Tab bar */}
+      <nav className="flex shrink-0 items-center gap-1 border-b border-ink-200 bg-white px-4">
+        {TABS.map((tab) => (
+          <NavLink
+            key={tab.segment}
+            to={`${materialBase}/${tab.segment}`}
+            className={({ isActive }) =>
+              [
+                "inline-flex items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium transition",
+                isActive
+                  ? "border-tiffany-500 text-tiffany-700"
+                  : "border-transparent text-ink-500 hover:text-ink-800",
+              ].join(" ")
+            }
+          >
+            <tab.icon className="h-4 w-4" />
+            {tab.label}
+          </NavLink>
+        ))}
+      </nav>
+
+      {/* Sub-page */}
+      <div className="w-full h-full">
+        <Outlet />
       </div>
     </div>
   );
