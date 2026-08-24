@@ -12,6 +12,7 @@ import {
   sceneRemove,
   sceneRename,
   sceneSet,
+  sceneTemplate,
 } from "./backend/spatial-backend/cli/scene.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -90,6 +91,11 @@ scene
   .command("get <slug>")
   .description("Print the scene nodes as a JSON array")
   .action(run(async (slug: string) => sceneGet(slug)));
+
+scene
+  .command("template [type]")
+  .description("Print node template(s) showing available params per type")
+  .action(run(async (type?: string) => sceneTemplate(type)));
 
 scene
   .command("set <slug>")

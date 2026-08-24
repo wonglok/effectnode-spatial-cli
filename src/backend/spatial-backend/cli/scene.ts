@@ -6,6 +6,8 @@ import {
   isSceneArray,
   removeNode,
   renameNode,
+  SCENE_NODE_TYPES,
+  type SceneNodeType,
 } from "../scene.js";
 
 // ---------------------------------------------------------------------------
@@ -97,4 +99,231 @@ export async function sceneClear(slug: string): Promise<void> {
   design.scene = [];
   await saveDesign(slug, design);
   console.log("Scene cleared");
+}
+
+// --- node templates (for AI agents: what params each type accepts) -----------
+
+interface ParamSpec {
+  type: string;
+  description: string;
+  default?: unknown;
+  required?: boolean;
+}
+
+interface NodeTemplate {
+  type: SceneNodeType;
+  description: string;
+  required: string[];
+  supportsChildren: boolean;
+  params: Record<string, ParamSpec>;
+  example: {
+    type: SceneNodeType;
+    name?: string;
+    params?: Record<string, unknown>;
+  };
+}
+
+const TRANSFORM_PARAMS: Record<string, ParamSpec> = {
+  position: {
+    type: "vec3",
+    default: [0, 0, 0],
+    description: "World position [x, y, z]",
+  },
+  rotation: {
+    type: "vec3 (degrees)",
+    default: [0, 0, 0],
+    description: "Euler rotation in degrees [x, y, z]",
+  },
+  scale: {
+    type: "vec3",
+    default: [1, 1, 1],
+    description: "Scale [x, y, z]",
+  },
+};
+
+const COLLIDER_USERDATA_PARAMS: Record<string, ParamSpec> = {
+  isCollider: {
+    type: "boolean",
+    default: false,
+    description: "Mark the node as a physics collider",
+  },
+  userData: {
+    type: "array",
+    default: [],
+    description: "Array of { key: string, value: string } entries",
+  },
+};
+
+const NODE_TEMPLATES: NodeTemplate[] = [
+  {
+    type: "group",
+    description: "Empty container that groups child nodes.",
+    required: [],
+    supportsChildren: true,
+    params: { ...TRANSFORM_PARAMS, ...COLLIDER_USERDATA_PARAMS },
+    example: { type: "group", name: "Group", params: { position: [0, 0, 0] } },
+  },
+  {
+    type: "mesh",
+    description:
+      "A mesh object with an optional transform, collider, and userData.",
+    required: [],
+    supportsChildren: true,
+    params: { ...TRANSFORM_PARAMS, ...COLLIDER_USERDATA_PARAMS },
+    example: { type: "mesh", name: "Mesh" },
+  },
+  {
+    type: "geometry",
+    description: "A box geometry placeholder. No editable params.",
+    required: [],
+    supportsChildren: false,
+    params: {},
+    example: { type: "geometry", name: "Geometry" },
+  },
+  {
+    type: "material",
+    description: "A standard PBR material.",
+    required: [],
+    supportsChildren: false,
+    params: {
+      color: {
+        type: "string (hex)",
+        default: "#ffffff",
+        description: "Base color",
+      },
+      roughness: {
+        type: "number (0-1)",
+        default: 0.5,
+        description: "Surface roughness",
+      },
+      metalness: {
+        type: "number (0-1)",
+        default: 0,
+        description: "Metallic reflectivity",
+      },
+    },
+    example: {
+      type: "material",
+      name: "Material",
+      params: { color: "#ffffff", roughness: 0.5, metalness: 0 },
+    },
+  },
+  {
+    type: "light",
+    description: "An ambient light.",
+    required: [],
+    supportsChildren: false,
+    params: { ...TRANSFORM_PARAMS, ...COLLIDER_USERDATA_PARAMS },
+    example: { type: "light", name: "Light" },
+  },
+  {
+    type: "camera",
+    description: "A perspective camera.",
+    required: [],
+    supportsChildren: false,
+    params: {
+      fov: {
+        type: "number",
+        default: 50,
+        description: "Vertical field of view (degrees)",
+      },
+      near: {
+        type: "number",
+        default: 0.1,
+        description: "Near clipping plane",
+      },
+      far: {
+        type: "number",
+        default: 1000,
+        description: "Far clipping plane",
+      },
+      ...TRANSFORM_PARAMS,
+    },
+    example: {
+      type: "camera",
+      name: "Camera",
+      params: { fov: 50, near: 0.1, far: 1000 },
+    },
+  },
+  {
+    type: "model",
+    description: "A GLB/GLTF model loaded from an asset `src`.",
+    required: ["src"],
+    supportsChildren: false,
+    params: {
+      src: {
+        type: "string",
+        required: true,
+        description: "Asset URL (list files with the `assets` command)",
+      },
+      ...TRANSFORM_PARAMS,
+      ...COLLIDER_USERDATA_PARAMS,
+    },
+    example: {
+      type: "model",
+      name: "model.glb",
+      params: {
+        src: "/api/projects/<slug>/uploads/model.glb",
+        position: [0, 0, 0],
+      },
+    },
+  },
+  {
+    type: "environment",
+    description: "An HDR environment map for scene lighting and/or background.",
+    required: ["src"],
+    supportsChildren: false,
+    params: {
+      src: {
+        type: "string",
+        required: true,
+        description: "HDR asset URL (list files with the `assets` command)",
+      },
+      environmentIntensity: {
+        type: "number",
+        default: 1,
+        description: "Environment light intensity",
+      },
+      backgroundIntensity: {
+        type: "number",
+        default: 1,
+        description: "Background intensity",
+      },
+      useEnvironment: {
+        type: "boolean",
+        default: true,
+        description: "Apply as scene environment",
+      },
+      useBackground: {
+        type: "boolean",
+        default: true,
+        description: "Show as scene background",
+      },
+    },
+    example: {
+      type: "environment",
+      name: "sky.hdr",
+      params: {
+        src: "/api/projects/<slug>/uploads/sky.hdr",
+        useEnvironment: true,
+        useBackground: true,
+      },
+    },
+  },
+];
+
+/** Print the template for one node type, or all types when `type` is omitted. */
+export async function sceneTemplate(type?: string): Promise<void> {
+  if (type) {
+    const template = NODE_TEMPLATES.find((t) => t.type === type);
+    if (!template) {
+      throw new Error(
+        `Unknown node type "${type}" (expected one of ${SCENE_NODE_TYPES.join(", ")})`,
+      );
+    }
+    console.log(JSON.stringify(template, null, 2));
+    return;
+  }
+  const map = Object.fromEntries(NODE_TEMPLATES.map((t) => [t.type, t]));
+  console.log(JSON.stringify(map, null, 2));
 }
