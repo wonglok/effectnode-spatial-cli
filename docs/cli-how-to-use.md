@@ -171,6 +171,7 @@ Usage: effectnode-spatial scene [options] [command]
 
 Commands:
   get <slug>                 Print the scene nodes as a JSON array
+  template [type]            Print node template(s) showing available params per type
   set [options] <slug>       Replace the whole scene (JSON array via --json, --file, or stdin)
   add [options] <slug>       Append a node (JSON object via --json, --file, or stdin)
   remove <slug> <id>         Remove a node (and its descendants) by id
@@ -183,6 +184,7 @@ All commands persist to the project's `design.json` — the same file the Studio
 | Command                           | What it does                    | Output                                    |
 | --------------------------------- | ------------------------------- | ----------------------------------------- |
 | `scene get <slug>`                | Print the scene as a JSON array | the node array                            |
+| `scene template [type]`           | Print node template(s)          | JSON param schema per type (or all types) |
 | `scene set <slug> --json <arr>`   | Replace the whole scene         | `Scene set (<n> nodes)`                   |
 | `scene add <slug> --json <obj>`   | Append one node                 | the full node JSON (incl. generated `id`) |
 | `scene remove <slug> <id>`        | Delete a node + descendants     | `Removed node <id>`                       |
@@ -215,6 +217,84 @@ effectnode-spatial scene rename life-is-good b7290cc2-7d64-47c8-87c8-2244b87f226
 effectnode-spatial scene clear life-is-good
 ```
 
+### 3.5 `scene template` — inspect node templates
+
+Every node type has a machine-readable template describing exactly which `params` it accepts. Agents use this to build valid nodes without guessing param names.
+
+```bash
+# All 8 types (a JSON object keyed by type)
+effectnode-spatial scene template
+
+# One type
+effectnode-spatial scene template model
+effectnode-spatial scene template environment
+```
+
+Each template is JSON with these fields:
+
+- `type`, `description` — what the node is
+- `required` — param names that must be present (e.g. `model` and `environment` require `src`)
+- `supportsChildren` — whether the node can nest child nodes
+- `params` — a map of `{ type, description, default?, required? }` for every accepted param
+- `example` — a minimal valid node you can copy into `scene add`
+
+```jsonc
+// effectnode-spatial scene template model
+{
+  "type": "model",
+  "description": "A GLB/GLTF model loaded from an asset `src`.",
+  "required": ["src"],
+  "supportsChildren": false,
+  "params": {
+    "src": {
+      "type": "string",
+      "required": true,
+      "description": "Asset URL (list files with the `assets` command)",
+    },
+    "position": {
+      "type": "vec3",
+      "default": [0, 0, 0],
+      "description": "World position [x, y, z]",
+    },
+    "rotation": {
+      "type": "vec3 (degrees)",
+      "default": [0, 0, 0],
+      "description": "Euler rotation in degrees [x, y, z]",
+    },
+    "scale": {
+      "type": "vec3",
+      "default": [1, 1, 1],
+      "description": "Scale [x, y, z]",
+    },
+    "isCollider": {
+      "type": "boolean",
+      "default": false,
+      "description": "Mark the node as a physics collider",
+    },
+    "userData": {
+      "type": "array",
+      "default": [],
+      "description": "Array of { key: string, value: string } entries",
+    },
+  },
+  "example": {
+    "type": "model",
+    "name": "model.glb",
+    "params": {
+      "src": "/api/projects/<slug>/uploads/model.glb",
+      "position": [0, 0, 0],
+    },
+  },
+}
+```
+
+Passing an unknown type errors and exits `1`:
+
+```bash
+effectnode-spatial scene template bogus
+# ✖ Unknown node type "bogus" (expected one of group, mesh, geometry, material, light, camera, model, environment)
+```
+
 ---
 
 ## 4. Scene node reference
@@ -241,7 +321,7 @@ A scene is a JSON array of nodes. Each node:
 
 Default names if `name` is omitted on `add`: `Group`, `Mesh`, `Geometry`, `Material`, `Light`, `Camera`, `Model`, `Environment`.
 
-**`params` is free-form** — it's an untyped `Record<string, unknown>`. The Studio interprets specific keys per type. Real examples from a live project:
+**`params` is free-form** — it's an untyped `Record<string, unknown>`. The Studio interprets specific keys per type. Run `effectnode-spatial scene template <type>` for the authoritative, machine-readable list of keys each type accepts (see §3.5). Real examples from a live project:
 
 ```jsonc
 // environment — HDR sky/background
@@ -311,14 +391,17 @@ effectnode-spatial projects
 # 2. See what files it can reference
 effectnode-spatial assets life-is-good
 
-# 3. Read the current scene
+# 3. Inspect node templates (optional — check valid params per type)
+effectnode-spatial scene template model
+
+# 4. Read the current scene
 effectnode-spatial scene get life-is-good > scene.json
 
-# 4. Add / edit nodes
+# 5. Add / edit nodes
 effectnode-spatial scene add life-is-good \
   --json '{"type":"model","params":{"src":"/api/projects/life-is-good/uploads/van.glb","position":[0,0,-2]}}'
 
-# 5. Review, then (optionally) open the Studio to see the result
+# 6. Review, then (optionally) open the Studio to see the result
 effectnode-spatial web
 ```
 
