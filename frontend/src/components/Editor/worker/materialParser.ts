@@ -155,8 +155,9 @@ export function hydrateJSONToNodeMaterial<T extends NodeMaterial>(
   json: MaterialGraphJSON,
   MaterialClass: new () => T,
   registry: NodeRegistry = defaultNodeRegistry,
+  sameMaterial?: any,
 ): T {
-  const material = new MaterialClass();
+  const material = sameMaterial || new MaterialClass();
   const instantiatedNodes = new Map<string, Node>();
 
   // 1. Instantiate nodes using registry
