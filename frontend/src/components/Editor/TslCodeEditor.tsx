@@ -77,20 +77,16 @@ function GraphEditorUnit({}: {}) {
   const [tslCode, setCode] = useState(
     `
 
-
 return async function materialFunction ({ THREE, TSL }) {
 
     const mat = new THREE.MeshPhysicalNodeMaterial({
       name: 'loklok'
     })
 
-    mat.colorNode = TSL.vec3(TSL.uv().x.mul(2).add(-1), TSL.float(0.5), TSL.float(0.5));
+    mat.colorNode = TSL.vec3(TSL.uv().y.mul(0.5).add(0.5), TSL.float(0.0), TSL.float(0.3));
 
     return mat
 }
-
-
-
 
 
 `.trim(),
@@ -159,7 +155,7 @@ return async function materialFunction ({ THREE, TSL }) {
           options={EDITOR_OPTIONS}
         />
         <div className="w-full h-1/2">
-          <WebGPUCanvas>
+          <WebGPUCanvas key={material?.uuid}>
             {/*  */}
 
             {material}
