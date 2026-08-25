@@ -339,7 +339,7 @@ function graphToFlow(json: MaterialGraphJSON): {
             target: resolve(n.id),
             targetHandle: socketId,
             label: socketId,
-            type: "smoothstep",
+            type: "default",
           });
         });
       } else if (typeof ref === "string") {
@@ -350,7 +350,7 @@ function graphToFlow(json: MaterialGraphJSON): {
           target: resolve(n.id),
           targetHandle: key,
           label: key,
-          type: "smoothstep",
+          type: "default",
         });
       }
     }
@@ -365,7 +365,7 @@ function graphToFlow(json: MaterialGraphJSON): {
       target: materialId,
       targetHandle: slot,
       label: slot,
-      type: "smoothstep",
+      type: "default",
     });
   }
 
@@ -586,7 +586,7 @@ const nodeTypes: NodeTypes = {
 };
 
 const defaultEdgeOptions = {
-  type: "smoothstep",
+  type: "default",
   // pathOptions: {
   //   curvature: 1,
   // },
