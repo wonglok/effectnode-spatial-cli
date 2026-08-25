@@ -48,7 +48,7 @@ self.onmessage = (ev) => {
 
         const jsonGraph = parseNodeMaterialToJSON(result.material);
 
-        console.log(jsonGraph);
+        // console.log(jsonGraph);
 
         self.postMessage(
           JSON.stringify({

@@ -151,6 +151,8 @@ function MaterialPreviewMesh({ tslCode = "" }: { tslCode: string }) {
       ?.then((r: any) => {
         //
 
+        console.log(r.jsonGraph);
+
         // Hydrate -> Re-created Material using auto-populated registry
         const restoredMaterial = hydrateJSONToNodeMaterial(
           r.jsonGraph,
