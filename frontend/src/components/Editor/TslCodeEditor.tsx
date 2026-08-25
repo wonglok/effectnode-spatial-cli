@@ -7,23 +7,11 @@ import { useEffect, useRef, useState } from "react";
 
 import { useParams } from "react-router-dom";
 
-// @ts-ignore
-// import TSLGraphEditor from "three/examples/jsm/inspector/extensions/tsl-graph/TSLGraphEditor.js";
-// import { TSLGraphLoader } from "three/examples/jsm/inspector/extensions/tsl-graph/TSLGraphLoader.js";
-// import { Inspector } from "three/addons/inspector/Inspector.js";
-
-// import TSLGraphEditorDefault from "three/addons/inspector/extensions/tsl-graph/TSLGraphEditor.js";
-import { MeshPhysicalNodeMaterial } from "three/webgpu";
 import { useTranslationService } from "./worker/use-translator";
 import { WebGPUCanvas } from "../../sdk/ui/WebGPUCanvas";
 import { GraphNodeUI } from "./GraphNodeUI";
 import { MaterialPreviewGarphMesh } from "./MaterialPreviewMesh";
 import { Environment, OrbitControls } from "@react-three/drei";
-// import { tslToJSON } from "../../sdk/code-material-json/convertTSLCodeToJSONAll";
-// import {
-//   convertJsonToTSLCodeAll,
-//   generateTSLCode,
-// } from "../../sdk/code-material-json/convertJsonToTSLCodeAll";
 
 // ---------------------------------------------------------------------------
 // Serve Monaco's web workers from locally-bundled files (via Vite's ?worker)
