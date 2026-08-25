@@ -649,8 +649,8 @@ export function GraphNodeUI({
           nodesDraggable={!readOnly}
           nodesConnectable={!readOnly}
           deleteKeyCode={readOnly ? null : undefined}
-          fitView
-          fitViewOptions={{ padding: 0.2 }}
+          // fitView
+          // fitViewOptions={{ padding: 0.2 }}
           className="bg-slate-950"
         >
           <Background color="#1e293b" gap={20} />
