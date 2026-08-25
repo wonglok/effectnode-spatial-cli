@@ -79,20 +79,13 @@ function GraphEditorUnit({}: {}) {
     `
 import * as THREE from 'three/webgpu'
 import * as TSL from 'three/tsl'
-
-import { vec3 } from 'three/tsl';
-import { uv } from 'three/tsl';
-import { float } from 'three/tsl';
-
 return async function materialFunction () {
 
-    const material = new THREE.MeshPhysicalNodeMaterial({
-      name: 'peach'
-    })
+    const mat = new THREE.MeshPhysicalNodeMaterial();
 
-    material.colorNode = vec3(uv().y.mul(0.5).add(0.5).mul(1.5), float(uv().x), float(0.3));
+    mat.colorNode = TSL.vec3(TSL.mul(TSL.add(TSL.mul(TSL.uv().y, TSL.float(0.5)), TSL.float(0.5)), TSL.float(1.5)), TSL.float(TSL.uv().y), TSL.float(0.3));
 
-    return material;
+    return mat;
 }
 
 `.trim(),
@@ -154,9 +147,9 @@ function MaterialPreviewMesh({ tslCode = "" }: { tslCode: string }) {
 
         // console.log(r.jsonGraph);
 
-        let tslCode = jsonToCode(r.jsonGraph);
+        // let tslCode = jsonToCode(r.jsonGraph);
 
-        console.log(tslCode);
+        // console.log(tslCode);
 
         // Hydrate -> Re-created Material using auto-populated registry
         const restoredMaterial = hydrateJSONToNodeMaterial(
