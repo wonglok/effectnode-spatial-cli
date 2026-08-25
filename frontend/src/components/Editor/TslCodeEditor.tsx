@@ -125,19 +125,7 @@ return async function materialFunction() {
           onMount={handleMount}
           options={EDITOR_OPTIONS}
         />
-        {/* <div className="w-full h-1/3">
-          <div className="w-full h-full">
-            {tslCode && (
-              <GraphUISection
-                tslCode={tslCode}
-                onCodeChange={(newCode) => {
-                  //
-                  setCode(newCode ?? "");
-                }}
-              ></GraphUISection>
-            )}
-          </div>
-        </div> */}
+
         <div className="w-full h-1/2">
           {
             <WebGPUCanvas>
@@ -155,37 +143,3 @@ return async function materialFunction() {
     </>
   );
 }
-
-// function GraphUISection({ tslCode = "", onCodeChange = (v: any) => {} }) {
-//   const { translateAsync, ready } = useTranslationService();
-//   const [json, setJSON] = useState<any>(null);
-//   useEffect(() => {
-//     if (!tslCode) {
-//       return;
-//     }
-
-//     translateAsync(`${tslCode}`)?.then((result: any) => {
-//       setJSON(result.jsonGraph);
-//     });
-//   }, [tslCode, ready]);
-
-//   if (!ready) {
-//     return null;
-//   }
-
-//   return (
-//     <div className="w-full h-full">
-//       {json && (
-//         <GraphNodeUI
-//           key={JSON.stringify(json)}
-//           json={json}
-//           //
-//           readOnly={true}
-//           onMaterialGraphJSONChange={(json: MaterialGraphJSON) => {
-//             jsonToCode(json).then((code) => onCodeChange(code));
-//           }}
-//         ></GraphNodeUI>
-//       )}
-//     </div>
-//   );
-// }
