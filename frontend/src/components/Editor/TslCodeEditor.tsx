@@ -78,9 +78,7 @@ function GraphEditorUnit({}: {}) {
     `
 
 
-//
-
-return async function genFunction ({ THREE, TSL }) {
+return async function materialFunction ({ THREE, TSL }) {
 
     const mat = new THREE.MeshPhysicalNodeMaterial({
       name: 'loklok'
@@ -90,6 +88,7 @@ return async function genFunction ({ THREE, TSL }) {
 
     return mat
 }
+
 
 
 
