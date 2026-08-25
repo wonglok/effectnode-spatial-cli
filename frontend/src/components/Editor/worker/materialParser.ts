@@ -199,15 +199,30 @@ export async function evaluateTSLCode(code: string): Promise<any> {
 }
 
 /**
- * Hydrates a material from a graph, re-evaluating the original source when the
- * graph contains `TSL.Fn` nodes (whose bodies live in `json.sourceCode`).
+ * Returns true when the graph contains `TSL.Fn` nodes (whose bodies are
+ * arbitrary JS and cannot be rebuilt from the node graph alone).
+ */
+function graphHasFn(json: MaterialGraphJSON): boolean {
+  return json.nodes.some(
+    (n) =>
+      n.customData?.isShaderCallNodeInternal === true ||
+      n.customData?.isFn === true,
+  );
+}
+
+/**
+ * Hydrates a material from a graph, re-evaluating the original source only when
+ * the graph actually contains `TSL.Fn` nodes. A graph edited in the editor
+ * carries a stale `sourceCode` (persisted by the store), so presence of
+ * `sourceCode` alone is not enough to decide whether to re-evaluate — that
+ * would ignore in-place node edits.
  */
 export async function hydrateMaterialAsync<T extends NodeMaterial>(
   json: MaterialGraphJSON,
   MaterialClass: new () => T,
   registry: NodeRegistry = defaultNodeRegistry,
 ): Promise<any> {
-  if (json.sourceCode) {
+  if (json.sourceCode && graphHasFn(json)) {
     return evaluateTSLCode(json.sourceCode);
   }
   return hydrateJSONToNodeMaterial(json, MaterialClass, registry);

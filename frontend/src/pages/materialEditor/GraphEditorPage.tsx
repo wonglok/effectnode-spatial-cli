@@ -14,6 +14,7 @@ import { MaterialPreviewGarphMesh } from "../../components/Editor/MaterialPrevie
 import { jsonToCode } from "../../components/Editor/worker/json-to-code";
 import { useMaterialEditorStore } from "../../store/materialEditorStore";
 import type { MaterialGraphJSON } from "../../components/Editor/worker/types";
+import { useTranslationService } from "../../components/Editor/worker/use-translator";
 
 /**
  * Node-graph editor backed by three.js's official TSL Graph Editor.
@@ -554,6 +555,7 @@ export function GraphEditorPage() {
       if (!code) {
         setTslCode(defaultCode);
         setJson(defaultData);
+      } else {
       }
     });
   }, [projectID, materialSlug, load, setTslCode, setJson]);
@@ -566,10 +568,12 @@ export function GraphEditorPage() {
             <GraphNodeUI
               json={json}
               onMaterialGraphJSONChange={(nextJson) => {
-                setJson(nextJson);
+                //
 
                 jsonToCode(nextJson).then((code) => {
                   setTslCode(code);
+                  setJson(JSON.parse(JSON.stringify(nextJson)));
+
                   if (projectID && materialSlug) {
                     save(projectID, materialSlug).catch(() => {});
                   }
@@ -582,6 +586,7 @@ export function GraphEditorPage() {
           <WebGPUCanvas>
             {json && (
               <MaterialPreviewGarphMesh
+                // key={JSON.stringify(json)}
                 jsonGraph={json}
               ></MaterialPreviewGarphMesh>
             )}
