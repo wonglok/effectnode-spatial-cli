@@ -100,7 +100,10 @@ export function jsonToCode(json: MaterialGraphJSON): string {
   );
 
   const lines: string[] = [];
-  lines.push("return async function genFunction ({ THREE, TSL }) {");
+  lines.push("import * as THREE from 'three/webgpu'");
+  lines.push("import * as TSL from 'three/tsl'");
+
+  lines.push("return async function materialFunction () {");
   lines.push("");
   lines.push(`    const mat = new THREE.${materialClass}();`);
   lines.push("");
@@ -166,7 +169,9 @@ function genNode(
       }
 
       case "VertexColorNode": {
-        return `TSL.vertexColor(${data.index ?? 0})`;
+        const index =
+          Number.isInteger(data.index) && data.index >= 0 ? data.index : 0;
+        return `TSL.vertexColor(${index})`;
       }
 
       case "ConstNode": {
@@ -211,7 +216,9 @@ function genNode(
 
       default: {
         // Unknown node type — keep the generated code runnable while flagging it.
-        return `/* unsupported node: ${node.type} */ TSL.float(0)`;
+        // The type is sanitized so it cannot break out of the comment.
+        const type = sanitizeIdentifier(node.type, "unknown");
+        return `/* unsupported node: ${type} */ TSL.float(0)`;
       }
     }
   } finally {

@@ -33,6 +33,7 @@ import { WebGPUCanvas } from "../../sdk/ui/WebGPUCanvas";
 import { Environment, OrbitControls } from "@react-three/drei";
 import { hydrateJSONToNodeMaterial } from "./worker/materialParser";
 import { defaultNodeRegistry } from "./worker/nodeRegistry";
+import { jsonToCode } from "./worker/json-to-code";
 // import { tslToJSON } from "../../sdk/code-material-json/convertTSLCodeToJSONAll";
 // import {
 //   convertJsonToTSLCodeAll,
@@ -144,14 +145,18 @@ return async function materialFunction () {
 
 function MaterialPreviewMesh({ tslCode = "" }: { tslCode: string }) {
   const { translateAsync } = useTranslationService();
-
   const [material, setMaterial] = useState<any>(null);
   useEffect(() => {
     translateAsync(`${tslCode}`)
       ?.then((r: any) => {
         //
+        //
 
         console.log(r.jsonGraph);
+
+        let tslCode = jsonToCode(r.jsonGraph);
+
+        console.log(tslCode);
 
         // Hydrate -> Re-created Material using auto-populated registry
         const restoredMaterial = hydrateJSONToNodeMaterial(
