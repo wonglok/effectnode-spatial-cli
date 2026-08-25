@@ -3,7 +3,6 @@ import {
   ReactFlow,
   Background,
   Controls,
-  MiniMap,
   Handle,
   Position,
   type Node,
@@ -20,12 +19,23 @@ import { MaterialGraphJSON, SerializedNode } from "./worker/types";
 // `materialParser.parseNodeMaterialToJSON` and renders the node graph as
 // editable, pannable/zoomable nodes. Child links come from each node's
 // `data.inputNodes` (the `edges` field is vestigial in the current format).
+//
+// Each node renders one socket per input (e.g. `aNode`/`bNode` for operators,
+// `nodes[0..n]` for joins) and a single output socket, so nodes with any number
+// of inputs/outputs are supported.
 // ---------------------------------------------------------------------------
+
+type Socket = {
+  id: string;
+  label: string;
+};
 
 type TSLNodeData = {
   label: string;
   sublabel?: string;
   kind?: string;
+  inputs: Socket[];
+  outputs: Socket[];
 };
 
 // Color the node border by its semantic kind (fallback: neutral slate).
@@ -47,7 +57,9 @@ function fmt(value: unknown): string {
 }
 
 /** Human-readable label + sublabel for a serialized node. */
-function describeNode(node: SerializedNode): TSLNodeData {
+function describeNode(
+  node: SerializedNode,
+): Omit<TSLNodeData, "inputs" | "outputs"> {
   const data = node.data ?? {};
   const custom = node.customData ?? {};
 
@@ -135,6 +147,22 @@ function describeNode(node: SerializedNode): TSLNodeData {
   }
 }
 
+/** One input socket per `inputNodes` entry (array entries expand to `key[i]`). */
+function computeInputSockets(node: SerializedNode): Socket[] {
+  const inputNodes = node.data?.inputNodes ?? {};
+  const sockets: Socket[] = [];
+  for (const [key, ref] of Object.entries(inputNodes)) {
+    if (Array.isArray(ref)) {
+      ref.forEach((_, i) =>
+        sockets.push({ id: `${key}[${i}]`, label: `${key}[${i}]` }),
+      );
+    } else if (typeof ref === "string") {
+      sockets.push({ id: key, label: key });
+    }
+  }
+  return sockets;
+}
+
 /**
  * Follows transparent intent `VarNode`s (created by `nodeProxyIntent`) down to
  * the expression they wrap, so the graph shows the real structure instead of a
@@ -218,12 +246,17 @@ function graphToFlow(json: MaterialGraphJSON): {
   const edges: Edge[] = [];
   const materialId = "__material__";
 
-  // Material root node.
+  // Material root node: one input socket per material slot, no output.
+  const materialSlots = Object.keys(json.materialSlots);
   nodes.push({
     id: materialId,
     type: "materialNode",
     position: { x: 0, y: 0 },
-    data: { label: json.materialType ?? "Material" },
+    data: {
+      label: json.materialType ?? "Material",
+      inputs: materialSlots.map((slot) => ({ id: slot, label: slot })),
+      outputs: [],
+    },
   });
 
   // Display nodes (skip collapsed intent VarNodes).
@@ -233,7 +266,11 @@ function graphToFlow(json: MaterialGraphJSON): {
       id: n.id,
       type: "tslNode",
       position: { x: 0, y: 0 },
-      data: describeNode(n),
+      data: {
+        ...describeNode(n),
+        inputs: computeInputSockets(n),
+        outputs: [{ id: "out", label: "" }],
+      },
     });
   }
 
@@ -245,11 +282,14 @@ function graphToFlow(json: MaterialGraphJSON): {
       if (Array.isArray(ref)) {
         ref.forEach((childId, i) => {
           if (typeof childId !== "string") return;
+          const socketId = `${key}[${i}]`;
           edges.push({
-            id: `${childId}->${n.id}:${key}[${i}]`,
+            id: `${childId}->${n.id}:${socketId}`,
             source: resolve(childId),
+            sourceHandle: "out",
             target: resolve(n.id),
-            label: `${key}[${i}]`,
+            targetHandle: socketId,
+            label: socketId,
             type: "smoothstep",
           });
         });
@@ -257,7 +297,9 @@ function graphToFlow(json: MaterialGraphJSON): {
         edges.push({
           id: `${ref}->${n.id}:${key}`,
           source: resolve(ref),
+          sourceHandle: "out",
           target: resolve(n.id),
+          targetHandle: key,
           label: key,
           type: "smoothstep",
         });
@@ -270,7 +312,9 @@ function graphToFlow(json: MaterialGraphJSON): {
     edges.push({
       id: `${nodeId}->${materialId}:${slot}`,
       source: resolve(nodeId),
+      sourceHandle: "out",
       target: materialId,
+      targetHandle: slot,
       label: slot,
       type: "smoothstep",
     });
@@ -280,36 +324,99 @@ function graphToFlow(json: MaterialGraphJSON): {
   return { nodes, edges };
 }
 
+function socketTop(index: number, count: number): string {
+  return `${((index + 1) / (count + 1)) * 100}%`;
+}
+
 function TSLNodeView({ data }: NodeProps) {
   const d = data as TSLNodeData;
+  const inputs = d.inputs ?? [];
+  const outputs = d.outputs ?? [];
   const border = KIND_STYLES[d.kind ?? ""] ?? "border-slate-600/70";
+
   return (
     <div
-      className={`min-w-[90px] rounded-lg border bg-slate-800 px-3 py-2 shadow-md ${border}`}
+      className={`relative min-w-[150px] rounded-lg border bg-slate-800 px-6 py-2 shadow-md ${border}`}
     >
-      <Handle type="target" position={Position.Left} className="bg-slate-500!" />
-      <div className="font-mono text-xs font-semibold text-slate-100">
-        {d.label}
-      </div>
-      {d.sublabel ? (
-        <div className="max-w-[140px] truncate font-mono text-[10px] text-slate-400">
-          {d.sublabel}
+      {inputs.map((s, i) => (
+        <span
+          key={`in-${s.id}`}
+          className="absolute left-2 -translate-y-1/2 font-mono text-[9px] text-slate-400"
+          style={{ top: socketTop(i, inputs.length) }}
+        >
+          {s.label}
+        </span>
+      ))}
+      {inputs.map((s, i) => (
+        <Handle
+          key={`inh-${s.id}`}
+          id={s.id}
+          type="target"
+          position={Position.Left}
+          style={{ top: socketTop(i, inputs.length) }}
+          className="bg-slate-500!"
+        />
+      ))}
+
+      <div className="text-center">
+        <div className="font-mono text-xs font-semibold text-slate-100">
+          {d.label}
         </div>
-      ) : null}
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="bg-slate-500!"
-      />
+        {d.sublabel ? (
+          <div className="mx-auto max-w-[130px] truncate font-mono text-[10px] text-slate-400">
+            {d.sublabel}
+          </div>
+        ) : null}
+      </div>
+
+      {outputs.map((s, i) => (
+        <span
+          key={`out-${s.id}`}
+          className="absolute right-2 -translate-y-1/2 font-mono text-[9px] text-slate-400"
+          style={{ top: socketTop(i, outputs.length) }}
+        >
+          {s.label}
+        </span>
+      ))}
+      {outputs.map((s, i) => (
+        <Handle
+          key={`outh-${s.id}`}
+          id={s.id}
+          type="source"
+          position={Position.Right}
+          style={{ top: socketTop(i, outputs.length) }}
+          className="bg-slate-500!"
+        />
+      ))}
     </div>
   );
 }
 
 function MaterialNodeView({ data }: NodeProps) {
   const d = data as TSLNodeData;
+  const inputs = d.inputs ?? [];
+
   return (
-    <div className="min-w-[160px] rounded-lg border border-blue-500/70 bg-blue-950/80 px-4 py-2 text-center shadow-md">
-      <Handle type="target" position={Position.Left} className="bg-blue-400!" />
+    <div className="relative min-w-[160px] rounded-lg border border-blue-500/70 bg-blue-950/80 px-6 py-3 text-center shadow-md">
+      {inputs.map((s, i) => (
+        <span
+          key={`in-${s.id}`}
+          className="absolute left-2 -translate-y-1/2 font-mono text-[9px] text-blue-300/80"
+          style={{ top: socketTop(i, inputs.length) }}
+        >
+          {s.label}
+        </span>
+      ))}
+      {inputs.map((s, i) => (
+        <Handle
+          key={`inh-${s.id}`}
+          id={s.id}
+          type="target"
+          position={Position.Left}
+          style={{ top: socketTop(i, inputs.length) }}
+          className="bg-blue-400!"
+        />
+      ))}
       <div className="font-mono text-xs font-bold text-blue-100">{d.label}</div>
       <div className="font-mono text-[10px] text-blue-300/70">material</div>
     </div>
@@ -339,21 +446,11 @@ export function GraphNodeUI({ json }: { json: MaterialGraphJSON }) {
         defaultEdgeOptions={defaultEdgeOptions}
         fitView
         fitViewOptions={{ padding: 0.2 }}
-        proOptions={{ hideAttribution: true }}
+        // proOptions={{ hideAttribution: true }}
         className="bg-slate-950"
       >
         <Background color="#1e293b" gap={20} />
         <Controls className="bg-slate-900! text-slate-200!" />
-        {/* <MiniMap
-          pannable
-          zoomable
-          nodeColor={(n) => {
-            const kind = (n.data as TSLNodeData).kind;
-            return kind === "operator" ? "#f59e0b" : "#475569";
-          }}
-          maskColor="rgba(15, 23, 42, 0.7)"
-          className="bg-slate-900!"
-        /> */}
       </ReactFlow>
     </div>
   );
