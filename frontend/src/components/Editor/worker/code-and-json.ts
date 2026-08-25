@@ -26,6 +26,10 @@ self.onmessage = (ev) => {
         //
       }
     }
+    code = code.replace(
+      "export async function materialFunction () {",
+      "return async function materialFunction () {",
+    );
 
     let all = code.split("\n");
     let noImportLines = all.filter((r: string) => {

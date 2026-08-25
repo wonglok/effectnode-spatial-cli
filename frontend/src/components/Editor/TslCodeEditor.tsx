@@ -23,11 +23,7 @@ import { useParams } from "react-router-dom";
 // import { Inspector } from "three/addons/inspector/Inspector.js";
 
 // import TSLGraphEditorDefault from "three/addons/inspector/extensions/tsl-graph/TSLGraphEditor.js";
-import {
-  MeshPhysicalNodeMaterial,
-  NodeMaterial,
-  NodeMaterialObserver,
-} from "three/webgpu";
+import { MeshPhysicalNodeMaterial } from "three/webgpu";
 import { useTranslationService } from "./worker/use-translator";
 import { WebGPUCanvas } from "../../sdk/ui/WebGPUCanvas";
 import { Environment, OrbitControls } from "@react-three/drei";
@@ -79,7 +75,8 @@ function GraphEditorUnit({}: {}) {
     `
 import * as THREE from 'three/webgpu'
 import * as TSL from 'three/tsl'
-return async function materialFunction () {
+
+export async function materialFunction () {
 
     const mat = new THREE.MeshPhysicalNodeMaterial();
 

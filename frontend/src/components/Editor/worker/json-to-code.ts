@@ -103,7 +103,7 @@ export function jsonToCode(json: MaterialGraphJSON): string {
   lines.push("import * as THREE from 'three/webgpu'");
   lines.push("import * as TSL from 'three/tsl'");
 
-  lines.push("return async function materialFunction () {");
+  lines.push("export async function materialFunction () {");
   lines.push("");
   lines.push(`    const mat = new THREE.${materialClass}();`);
   lines.push("");
