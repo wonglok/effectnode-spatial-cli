@@ -1,7 +1,9 @@
 import { Node, NodeMaterial } from "three/webgpu";
+import * as THREE from "three/webgpu";
+import * as TSL from "three/tsl";
 import { MaterialGraphJSON, SerializedNode, NodeRegistry } from "./types";
 import { defaultNodeRegistry } from "./nodeRegistry";
-
+Node.captureStackTrace = true;
 /**
  * Returns a stable type identifier for a node. Prefers the instance `type`
  * getter (which delegates to the class's `static get type()`, e.g.
@@ -52,15 +54,18 @@ const MATERIAL_SLOTS = [
  */
 export function parseNodeMaterialToJSON(
   material: NodeMaterial,
+  sourceCode?: string,
 ): MaterialGraphJSON {
   const materialSlots: Record<string, string> = {};
   const liveNodes: Node[] = [];
   const seen = new Set<Node>();
   const matObj = material as any;
+  let hasFn = false;
 
   function collect(node: Node): void {
     if (!node || typeof node !== "object" || seen.has(node)) return;
     seen.add(node);
+    if ((node as any).isShaderCallNodeInternal || (node as any).isFn) hasFn = true;
     liveNodes.push(node);
     for (const { childNode } of (node as any).getSerializeChildren()) {
       collect(childNode);
@@ -110,6 +115,9 @@ export function parseNodeMaterialToJSON(
     // Child links now live in each node's `data.inputNodes`; kept for the
     // MaterialGraphJSON shape (see backend `MaterialGraph`).
     edges: [],
+    // TSL.Fn bodies are arbitrary JS and can't be reconstructed from the graph,
+    // so carry the original source for the hydrate step to re-evaluate.
+    ...(hasFn && sourceCode ? { sourceCode } : {}),
   };
 }
 
@@ -163,4 +171,44 @@ export function hydrateJSONToNodeMaterial<T extends NodeMaterial>(
   }
 
   return material;
+}
+
+/**
+ * Re-evaluates the original TSL source (the same text the editor sends to the
+ * worker) to reconstruct a material. Needed for `TSL.Fn`, whose function bodies
+ * are arbitrary JS and therefore cannot be rebuilt from the serialized node
+ * graph. Mirrors the evaluation logic in `code-and-json.ts`.
+ */
+export async function evaluateTSLCode(code: string): Promise<any> {
+  let importCode = "";
+  const lowerArr = "abcdefghijklmnopqrstuvwxyz".split("");
+  for (const kn in TSL) {
+    if (lowerArr.includes(kn.charAt(0))) {
+      importCode += `const ${kn} = TSL["${kn}"]\n`;
+    }
+  }
+
+  const noImportLines = code
+    .split("\n")
+    .filter((r) => !r.trim().startsWith("import"));
+
+  const full = `${importCode}\n${noImportLines.join("\n")}`;
+  const codeEval = new Function("TSL", "THREE", full);
+  const resultFunc = codeEval(TSL, THREE);
+  return resultFunc({});
+}
+
+/**
+ * Hydrates a material from a graph, re-evaluating the original source when the
+ * graph contains `TSL.Fn` nodes (whose bodies live in `json.sourceCode`).
+ */
+export async function hydrateMaterialAsync<T extends NodeMaterial>(
+  json: MaterialGraphJSON,
+  MaterialClass: new () => T,
+  registry: NodeRegistry = defaultNodeRegistry,
+): Promise<any> {
+  if (json.sourceCode) {
+    return evaluateTSLCode(json.sourceCode);
+  }
+  return hydrateJSONToNodeMaterial(json, MaterialClass, registry);
 }

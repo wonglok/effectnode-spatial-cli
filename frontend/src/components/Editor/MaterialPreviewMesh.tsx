@@ -17,7 +17,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 // import TSLGraphEditorDefault from "three/addons/inspector/extensions/tsl-graph/TSLGraphEditor.js";
 import { MeshPhysicalNodeMaterial } from "three/webgpu";
 import { useTranslationService } from "./worker/use-translator";
-import { hydrateJSONToNodeMaterial } from "./worker/materialParser";
+import { hydrateMaterialAsync } from "./worker/materialParser";
 import { defaultNodeRegistry } from "./worker/nodeRegistry";
 import { jsonToCode } from "./worker/json-to-code";
 import { MaterialGraphJSON } from "./worker/types";
@@ -35,22 +35,17 @@ export function MaterialPreviewCodeMesh({ tslCode = "" }: { tslCode: string }) {
         // let tslCode = jsonToCode(r.jsonGraph);
         // console.log(tslCode);
 
-        // Hydrate -> Re-created Material using auto-populated registry
-        const restoredMaterial = hydrateJSONToNodeMaterial(
-          r.jsonGraph,
-          MeshPhysicalNodeMaterial,
-          defaultNodeRegistry,
-        );
-
-        setTimeout(() => {
-          setMaterial(
-            <>
-              <mesh material={restoredMaterial}>
-                <sphereGeometry args={[1, 64, 64]}></sphereGeometry>
-              </mesh>
-            </>,
-          );
-        });
+        // Hydrate -> Re-created Material (re-evaluates source for TSL.Fn).
+        hydrateMaterialAsync(r.jsonGraph, MeshPhysicalNodeMaterial, defaultNodeRegistry)
+          .then((restoredMaterial: any) => {
+            setMaterial(
+              <>
+                <mesh material={restoredMaterial}>
+                  <sphereGeometry args={[1, 64, 64]}></sphereGeometry>
+                </mesh>
+              </>,
+            );
+          });
       })
       .catch((r) => {
         console.error(r);
@@ -72,21 +67,17 @@ export function MaterialPreviewGarphMesh({
   const { translateAsync } = useTranslationService();
   const [material, setMaterial] = useState<any>(null);
   useEffect(() => {
-    const restoredMaterial = hydrateJSONToNodeMaterial(
-      jsonGraph,
-      MeshPhysicalNodeMaterial,
-      defaultNodeRegistry,
-    );
-
-    setTimeout(() => {
-      setMaterial(
-        <>
-          <mesh material={restoredMaterial}>
-            <sphereGeometry args={[1, 64, 64]}></sphereGeometry>
-          </mesh>
-        </>,
-      );
-    });
+    hydrateMaterialAsync(jsonGraph, MeshPhysicalNodeMaterial, defaultNodeRegistry)
+      .then((restoredMaterial: any) => {
+        setMaterial(
+          <>
+            <mesh material={restoredMaterial}>
+              <sphereGeometry args={[1, 64, 64]}></sphereGeometry>
+            </mesh>
+          </>,
+        );
+      })
+      .catch((e: any) => console.error(e));
 
     return () => {
       setMaterial(null);

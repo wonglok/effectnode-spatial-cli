@@ -52,17 +52,23 @@ function GraphEditorUnit({}: {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [tslCode, setCode] = useState(() => {
     return `
-import * as THREE from 'three/webgpu'
-import * as TSL from 'three/tsl'
+import * as THREE from "three/webgpu";
+import * as TSL from "three/tsl";
 
-return async function materialFunction () {
+return async function materialFunction() {
+  const mat = new THREE.MeshPhysicalNodeMaterial();
 
-    const mat = new THREE.MeshPhysicalNodeMaterial();
+  mat.colorNode = TSL.vec3(
+    TSL.mul(
+      TSL.add(TSL.mul(TSL.uv().y, TSL.float(-0.5)), TSL.float(-0.5)),
+      TSL.float(1.5),
+    ),
+    TSL.float(TSL.uv().y),
+    TSL.float(0.3),
+  );
 
-    mat.colorNode = TSL.vec3(TSL.mul(TSL.add(TSL.mul(TSL.uv().y, TSL.float(0.5)), TSL.float(0.5)), TSL.float(1.5)), TSL.float(TSL.uv().y), TSL.float(0.3));
-
-    return mat;
-}
+  return mat;
+};
 
 `.trim();
   });
@@ -175,8 +181,7 @@ function GraphUISection({ tslCode = "", onCodeChange = (v: any) => {} }) {
           json={json}
           //
           onMaterialGraphJSONChange={(json: MaterialGraphJSON) => {
-            let code = jsonToCode(json);
-            onCodeChange(code);
+            jsonToCode(json).then((code) => onCodeChange(code));
           }}
         ></GraphNodeUI>
       )}

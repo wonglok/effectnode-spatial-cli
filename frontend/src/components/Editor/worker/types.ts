@@ -20,6 +20,9 @@ export interface MaterialGraphJSON {
   materialSlots: Record<string, string>; // Maps slot (e.g. 'colorNode') -> Node ID
   nodes: SerializedNode[];
   edges: SerializedEdge[];
+  // Original TSL source code, captured when the graph contains `TSL.Fn` nodes
+  // whose JS bodies cannot be reconstructed from the node graph alone.
+  sourceCode?: string;
 }
 
 export type NodeRegistry = Record<string, new (...args: any[]) => Node>;

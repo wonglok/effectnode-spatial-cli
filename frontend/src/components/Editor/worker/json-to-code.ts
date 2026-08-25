@@ -1,3 +1,6 @@
+import * as prettier from "prettier/standalone";
+import * as prettierBabel from "prettier/plugins/babel";
+import * as prettierEstree from "prettier/plugins/estree";
 import { MaterialGraphJSON, SerializedNode } from "./types";
 
 /**
@@ -110,7 +113,7 @@ const MAPPED_TYPES = new Set([
   "IndexNode",
 ]);
 
-export function jsonToCode(json: MaterialGraphJSON): string {
+function generateCode(json: MaterialGraphJSON): string {
   const nodesById = new Map<string, SerializedNode>();
   for (const node of json.nodes) {
     nodesById.set(node.id, node);
@@ -154,6 +157,20 @@ export function jsonToCode(json: MaterialGraphJSON): string {
   lines.push("}");
 
   return lines.join("\n");
+}
+
+/** Generates TSL source and formats it with Prettier for readability. */
+export async function jsonToCode(json: MaterialGraphJSON): Promise<string> {
+  const code = generateCode(json);
+  try {
+    return await prettier.format(code, {
+      parser: "babel-ts",
+      plugins: [prettierBabel, prettierEstree],
+    });
+  } catch (e) {
+    console.warn("Prettier failed to format generated code:", e);
+    return code;
+  }
 }
 
 /**

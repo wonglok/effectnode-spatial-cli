@@ -13,6 +13,7 @@ self.onmessage = (ev) => {
   let data = JSON.parse(rawdata);
 
   let code = data.code;
+  const originalCode = data.code;
   let id = data.id;
 
   try {
@@ -51,7 +52,7 @@ self.onmessage = (ev) => {
 
         // Parse -> JSON
 
-        const jsonGraph = parseNodeMaterialToJSON(instace);
+        const jsonGraph = parseNodeMaterialToJSON(instace, originalCode);
 
         // console.log(jsonGraph);
 

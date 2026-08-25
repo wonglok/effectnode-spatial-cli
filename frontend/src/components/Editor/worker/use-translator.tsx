@@ -3,6 +3,7 @@ import CodeAndJSONWorker from "./code-and-json?worker";
 
 export const useTranslationService = () => {
   let [worker, setWorker] = useState<any>();
+  // let [api, setAPI] = useState<any>({});
 
   const mapID = useMemo(() => {
     return new Map();
@@ -24,6 +25,27 @@ export const useTranslationService = () => {
         }
       }
     });
+
+    // setAPI({
+    //   translateAsync: (code: string) => {
+    //     if (!worker) {
+    //       return;
+    //     }
+
+    //     const id = crypto.randomUUID();
+
+    //     worker.postMessage(
+    //       JSON.stringify({
+    //         id,
+    //         code: `${code}`,
+    //       }),
+    //     );
+
+    //     return new Promise((resolve, reject) => {
+    //       mapID.set(id, { resolve, reject });
+    //     });
+    //   },
+    // });
 
     setWorker(worker);
   }, []);
