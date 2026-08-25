@@ -18,6 +18,15 @@ export function createDefaultNodeRegistry(): NodeRegistry {
     ) {
       // console.log(key);
       registry[key] = value as new (...args: any[]) => TSL.Node;
+
+      // Also register under the node's stable `type` (e.g. 'OperatorNode'),
+      // since serialization stores `constructor.type`. This keeps lookups
+      // working even when an export name differs from the class's `type`
+      // (e.g. `SubBuildNode` -> `SubBuild`).
+      const type = (value as any).type;
+      if (type && registry[type] === undefined) {
+        registry[type] = value as new (...args: any[]) => TSL.Node;
+      }
     }
   }
 

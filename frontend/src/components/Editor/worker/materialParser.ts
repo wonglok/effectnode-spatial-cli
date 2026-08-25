@@ -7,6 +7,18 @@ import {
 } from "./types";
 import { defaultNodeRegistry } from "./nodeRegistry";
 
+/**
+ * Returns a stable type identifier for a node. Prefers the `static get type()`
+ * accessor that every TSL node class exposes (e.g. 'OperatorNode') over
+ * `constructor.name`, because bundlers (Vite/rollup) can rename class bindings
+ * (e.g. `OperatorNode` -> `_OperatorNode`) when the node classes are re-exported
+ * through `three/tsl`, which would break name-based registry lookups.
+ */
+function getNodeTypeName(node: Node): string {
+  const ctor = node.constructor as any;
+  return ctor.type ?? ctor.name;
+}
+
 const MATERIAL_SLOTS = [
   "colorNode",
   "opacityNode",
@@ -46,7 +58,7 @@ export function parseNodeMaterialToJSON(
 
   function getOrCreateNodeId(node: Node): string {
     if (!nodeToIdMap.has(node)) {
-      const typeName = node.constructor.name;
+      const typeName = getNodeTypeName(node);
       const id = `node_${++idCounter}_${typeName}`;
       nodeToIdMap.set(node, id);
     }
@@ -63,7 +75,7 @@ export function parseNodeMaterialToJSON(
 
     const serializedNode: SerializedNode = {
       id: nodeId,
-      type: node.constructor.name,
+      type: getNodeTypeName(node),
       properties: {},
     };
 

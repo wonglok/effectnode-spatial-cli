@@ -74,19 +74,26 @@ export function TslCodeEditor() {
 function GraphEditorUnit({}: {}) {
   const { materialSlug } = useParams();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [tslCode, setCode] =
-    useState(`return async function genFunction ({ THREE, TSL }) {
+  const [tslCode, setCode] = useState(
+    `
+      
+    
+return async function genFunction ({ THREE, TSL }) {
 
     const mat = new THREE.MeshPhysicalNodeMaterial({
       name: 'loklok'
     })
 
-    mat.colorNode = TSL.vec3(TSL.uv().x, 1.0, TSL.float(0.5));
+    mat.colorNode = TSL.vec3(TSL.uv().x.add(0.5), TSL.float(0.5), TSL.float(0.5));
 
     return mat
 }
 
-`);
+
+
+
+`.trim(),
+  );
 
   const handleMount: OnMount = (editor) => {
     // Rely on `automaticLayout` (set by @monaco-editor/react) to fill the pane.
@@ -119,11 +126,23 @@ function GraphEditorUnit({}: {}) {
           defaultNodeRegistry,
         );
 
-        setMaterial(restoredMaterial);
+        setTimeout(() => {
+          setMaterial(
+            <Suspense fallback={null}>
+              <mesh material={restoredMaterial}>
+                <sphereGeometry></sphereGeometry>
+              </mesh>
+            </Suspense>,
+          );
+        });
       })
       .catch((r) => {
         console.error(r);
       });
+
+    return () => {
+      setMaterial(null);
+    };
   }, [translateAsync, tslCode]);
 
   return (
@@ -141,11 +160,8 @@ function GraphEditorUnit({}: {}) {
         <div className="w-full h-1/2">
           <WebGPUCanvas>
             {/*  */}
-            {material && (
-              <mesh material={material} key={material?.uuid}>
-                <sphereGeometry></sphereGeometry>
-              </mesh>
-            )}
+
+            {material}
 
             <Suspense fallback={null}>
               <Environment preset="city"></Environment>
