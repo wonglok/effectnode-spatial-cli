@@ -81,8 +81,7 @@ function GraphEditorUnit({}: {}) {
       name: 'loklok'
     })
 
-    mat.color = new THREE.Color("#ff0000");
-    mat.colorNode = TSL.vec3(TSL.uv().x, 0.0, TSL.float(0.0));
+    mat.colorNode = TSL.vec3(TSL.uv().x, 1.0, TSL.float(0.5));
 
     return mat
 }
