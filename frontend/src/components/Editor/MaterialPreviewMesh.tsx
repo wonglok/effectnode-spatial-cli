@@ -36,16 +36,19 @@ export function MaterialPreviewCodeMesh({ tslCode = "" }: { tslCode: string }) {
         // console.log(tslCode);
 
         // Hydrate -> Re-created Material (re-evaluates source for TSL.Fn).
-        hydrateMaterialAsync(r.jsonGraph, MeshPhysicalNodeMaterial, defaultNodeRegistry)
-          .then((restoredMaterial: any) => {
-            setMaterial(
-              <>
-                <mesh material={restoredMaterial}>
-                  <sphereGeometry args={[1, 64, 64]}></sphereGeometry>
-                </mesh>
-              </>,
-            );
-          });
+        hydrateMaterialAsync(
+          r.jsonGraph,
+          MeshPhysicalNodeMaterial,
+          defaultNodeRegistry,
+        ).then((restoredMaterial: any) => {
+          setMaterial(
+            <>
+              <mesh material={restoredMaterial}>
+                <sphereGeometry args={[1, 64, 64]}></sphereGeometry>
+              </mesh>
+            </>,
+          );
+        });
       })
       .catch((r) => {
         console.error(r);
@@ -67,7 +70,11 @@ export function MaterialPreviewGarphMesh({
   const { translateAsync } = useTranslationService();
   const [material, setMaterial] = useState<any>(null);
   useEffect(() => {
-    hydrateMaterialAsync(jsonGraph, MeshPhysicalNodeMaterial, defaultNodeRegistry)
+    hydrateMaterialAsync(
+      jsonGraph,
+      MeshPhysicalNodeMaterial,
+      defaultNodeRegistry,
+    )
       .then((restoredMaterial: any) => {
         setMaterial(
           <>

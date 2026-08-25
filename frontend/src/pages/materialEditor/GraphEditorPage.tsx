@@ -538,27 +538,27 @@ return async function materialFunction () {
 `;
 
 export function GraphEditorPage() {
-  let [tslCode, setTSLCode] = useState(defaultCode);
-
   let [json, setJSON] = useState(null);
   const { translateAsync, ready } = useTranslationService();
 
   useEffect(() => {
-    if (!tslCode) {
-      return;
-    }
-    //
-    translateAsync(`${tslCode}`)?.then((result: any) => {
+    translateAsync(`${defaultCode}`)?.then((result: any) => {
       setJSON(result.jsonGraph);
     });
-  }, [tslCode, ready]);
+  }, [ready]);
 
   return (
     <>
       <div className="w-full h-full">
         <div className="w-full h-1/2">
           {json && (
-            <GraphNodeUI key={JSON.stringify(json)} json={json}></GraphNodeUI>
+            <GraphNodeUI
+              key={JSON.stringify(json)}
+              json={json}
+              onMaterialGraphJSONChange={(json) => {
+                setJSON(json as any);
+              }}
+            ></GraphNodeUI>
           )}
         </div>
         <div className="w-full h-1/2">

@@ -400,8 +400,9 @@ function AttributeSelect({ id, value }: { id: string; value: string }) {
   return (
     <select
       value={value}
+      disabled={!edit}
       onChange={(e) => edit?.(id, { _attributeName: e.target.value })}
-      className="nodrag mt-0.5 w-full rounded border border-slate-600 bg-slate-700 px-1 py-0.5 font-mono text-[10px] text-slate-200 outline-none"
+      className="nodrag mt-0.5 w-full rounded border border-slate-600 bg-slate-700 px-1 py-0.5 font-mono text-[10px] text-slate-200 outline-none disabled:cursor-not-allowed disabled:opacity-60"
     >
       {options.map((o) => (
         <option key={o} value={o}>
@@ -419,12 +420,13 @@ function ConstInput({ id, value }: { id: string; value: number }) {
       type="number"
       step="any"
       value={value}
+      disabled={!edit}
       onChange={(e) => {
         const next = e.target.valueAsNumber;
         if (Number.isNaN(next)) return;
         edit?.(id, { value: next });
       }}
-      className="nodrag mt-0.5 w-full rounded border border-slate-600 bg-slate-700 px-1 py-0.5 font-mono text-[10px] text-slate-200 outline-none"
+      className="nodrag mt-0.5 w-full rounded border border-slate-600 bg-slate-700 px-1 py-0.5 font-mono text-[10px] text-slate-200 outline-none disabled:cursor-not-allowed disabled:opacity-60"
     />
   );
 }
@@ -438,8 +440,9 @@ function OperatorSelect({ id, value }: { id: string; value: string }) {
   return (
     <select
       value={value}
+      disabled={!edit}
       onChange={(e) => edit?.(id, { op: e.target.value })}
-      className="nodrag mt-0.5 w-full rounded border border-slate-600 bg-slate-700 px-1 py-0.5 font-mono text-[10px] text-slate-200 outline-none"
+      className="nodrag mt-0.5 w-full rounded border border-slate-600 bg-slate-700 px-1 py-0.5 font-mono text-[10px] text-slate-200 outline-none disabled:cursor-not-allowed disabled:opacity-60"
     >
       {options.map((o) => (
         <option key={o} value={o}>
@@ -565,9 +568,11 @@ const defaultEdgeOptions = {
 export function GraphNodeUI({
   json,
   onMaterialGraphJSONChange,
+  readOnly = false,
 }: {
   json: MaterialGraphJSON;
   onMaterialGraphJSONChange?: (json: MaterialGraphJSON) => void;
+  readOnly?: boolean;
 }) {
   const jsonRef = useRef<MaterialGraphJSON>(json);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
@@ -603,7 +608,7 @@ export function GraphNodeUI({
   );
 
   return (
-    <NodeEditContext.Provider value={handleEdit}>
+    <NodeEditContext.Provider value={readOnly ? undefined : handleEdit}>
       <div className="h-full w-full bg-slate-950">
         <ReactFlow
           nodes={nodes}
@@ -612,6 +617,9 @@ export function GraphNodeUI({
           onEdgesChange={onEdgesChange}
           nodeTypes={nodeTypes}
           defaultEdgeOptions={defaultEdgeOptions}
+          nodesDraggable={!readOnly}
+          nodesConnectable={!readOnly}
+          deleteKeyCode={readOnly ? null : undefined}
           fitView
           fitViewOptions={{ padding: 0.2 }}
           className="bg-slate-950"
