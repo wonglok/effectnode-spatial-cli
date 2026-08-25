@@ -413,21 +413,47 @@ function AttributeSelect({ id, value }: { id: string; value: string }) {
   );
 }
 
-function ConstInput({ id, value }: { id: string; value: number }) {
+function ConstInput({
+  id,
+  value,
+  valueType,
+}: {
+  id: string;
+  value: number;
+  valueType?: string;
+}) {
   const edit = useContext(NodeEditContext);
+  const isInt = valueType === "int" || valueType === "uint";
+  const rangeMin = 0;
+  const rangeMax = isInt ? 10 : 1;
+  const rangeStep = isInt ? 1 : 0.01;
+
+  const commit = (next: number) => {
+    if (Number.isNaN(next)) return;
+    edit?.(id, { value: next });
+  };
+
   return (
-    <input
-      type="number"
-      step="any"
-      value={value}
-      disabled={!edit}
-      onChange={(e) => {
-        const next = e.target.valueAsNumber;
-        if (Number.isNaN(next)) return;
-        edit?.(id, { value: next });
-      }}
-      className="nodrag mt-0.5 w-full rounded border border-slate-600 bg-slate-700 px-1 py-0.5 font-mono text-[10px] text-slate-200 outline-none disabled:cursor-not-allowed disabled:opacity-60"
-    />
+    <div className="nodrag mt-0.5 flex w-full flex-col gap-1">
+      <input
+        type="range"
+        min={rangeMin}
+        max={rangeMax}
+        step={rangeStep}
+        value={value}
+        disabled={!edit}
+        onChange={(e) => commit(Number(e.target.value))}
+        className="w-full cursor-pointer accent-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+      />
+      <input
+        type="number"
+        step="any"
+        value={value}
+        disabled={!edit}
+        onChange={(e) => commit(e.target.valueAsNumber)}
+        className="w-full rounded border border-slate-600 bg-slate-700 px-1 py-0.5 font-mono text-[10px] text-slate-200 outline-none disabled:cursor-not-allowed disabled:opacity-60"
+      />
+    </div>
   );
 }
 
@@ -490,7 +516,7 @@ function TSLNodeView({ id, data }: NodeProps) {
         {d.attributeName !== undefined ? (
           <AttributeSelect id={id} value={d.attributeName} />
         ) : d.constValue !== undefined ? (
-          <ConstInput id={id} value={d.constValue} />
+          <ConstInput id={id} value={d.constValue} valueType={d.valueType} />
         ) : d.op !== undefined ? (
           <OperatorSelect id={id} value={d.op} />
         ) : d.sublabel ? (
