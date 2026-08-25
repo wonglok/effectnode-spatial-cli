@@ -155,7 +155,7 @@ function resolveId(id: string, nodeMap: Map<string, SerializedNode>): string {
   return cur;
 }
 
-/** Layered layout: material at the bottom, inputs fan out above. */
+/** Layered layout: material at the right, inputs fan out to the left. */
 function layout(nodes: Node[], edges: Edge[], rootId: string): void {
   const depth = new Map<string, number>();
   depth.set(rootId, 0);
@@ -198,8 +198,8 @@ function layout(nodes: Node[], edges: Edge[], rootId: string): void {
       const node = nodes.find((n) => n.id === id);
       if (!node) return;
       node.position = {
-        x: i * X - ((total - 1) * X) / 2,
-        y: (maxDepth - d) * Y,
+        x: (maxDepth - d) * X,
+        y: i * Y - ((total - 1) * Y) / 2,
       };
     });
   }
@@ -287,7 +287,7 @@ function TSLNodeView({ data }: NodeProps) {
     <div
       className={`min-w-[90px] rounded-lg border bg-slate-800 px-3 py-2 shadow-md ${border}`}
     >
-      <Handle type="target" position={Position.Top} className="!bg-slate-500" />
+      <Handle type="target" position={Position.Left} className="bg-slate-500!" />
       <div className="font-mono text-xs font-semibold text-slate-100">
         {d.label}
       </div>
@@ -298,8 +298,8 @@ function TSLNodeView({ data }: NodeProps) {
       ) : null}
       <Handle
         type="source"
-        position={Position.Bottom}
-        className="!bg-slate-500"
+        position={Position.Right}
+        className="bg-slate-500!"
       />
     </div>
   );
@@ -309,7 +309,7 @@ function MaterialNodeView({ data }: NodeProps) {
   const d = data as TSLNodeData;
   return (
     <div className="min-w-[160px] rounded-lg border border-blue-500/70 bg-blue-950/80 px-4 py-2 text-center shadow-md">
-      <Handle type="target" position={Position.Top} className="!bg-blue-400" />
+      <Handle type="target" position={Position.Left} className="bg-blue-400!" />
       <div className="font-mono text-xs font-bold text-blue-100">{d.label}</div>
       <div className="font-mono text-[10px] text-blue-300/70">material</div>
     </div>
@@ -343,7 +343,7 @@ export function GraphNodeUI({ json }: { json: MaterialGraphJSON }) {
         className="bg-slate-950"
       >
         <Background color="#1e293b" gap={20} />
-        <Controls className="!bg-slate-900 !text-slate-200" />
+        <Controls className="bg-slate-900! text-slate-200!" />
         {/* <MiniMap
           pannable
           zoomable
@@ -352,7 +352,7 @@ export function GraphNodeUI({ json }: { json: MaterialGraphJSON }) {
             return kind === "operator" ? "#f59e0b" : "#475569";
           }}
           maskColor="rgba(15, 23, 42, 0.7)"
-          className="!bg-slate-900"
+          className="bg-slate-900!"
         /> */}
       </ReactFlow>
     </div>
