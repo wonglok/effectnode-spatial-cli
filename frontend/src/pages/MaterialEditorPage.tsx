@@ -1,4 +1,4 @@
-import { useEffect, type ComponentType } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
 import {
   IconAssets,
@@ -11,6 +11,7 @@ import {
 } from "../components/icons";
 import { useProjectsStore } from "../store/projectsStore";
 import { useMaterialsStore } from "../store/materialsStore";
+import { useMaterialEditorStore } from "../store/materialEditorStore";
 
 interface Tab {
   segment: string;
@@ -37,12 +38,34 @@ export function MaterialEditorPage() {
   );
   const status = useMaterialsStore((state) => state.status);
   const fetchMaterials = useMaterialsStore((state) => state.fetchMaterials);
+  const save = useMaterialEditorStore((s) => s.save);
+
+  const [justSaved, setJustSaved] = useState(false);
 
   // Keep the list loaded so a deep link (/materials/<slug> without visiting the
   // list first) can still resolve the material's name.
   useEffect(() => {
     if (projectID) fetchMaterials(projectID).catch(() => {});
   }, [projectID, fetchMaterials]);
+
+  // Cmd+S / Ctrl+S saves the material to disk (snapshotting a backup).
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (projectID && materialSlug) {
+          save(projectID, materialSlug)
+            .then(() => {
+              setJustSaved(true);
+              setTimeout(() => setJustSaved(false), 1500);
+            })
+            .catch(() => {});
+        }
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [projectID, materialSlug, save]);
 
   if (!project) return null;
 
@@ -87,6 +110,11 @@ export function MaterialEditorPage() {
               {materialSlug}
             </div>
           </div>
+          {justSaved && (
+            <span className="shrink-0 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-600">
+              Saved
+            </span>
+          )}
         </div>
 
         <Link
