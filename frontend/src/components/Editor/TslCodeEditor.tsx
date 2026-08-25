@@ -60,8 +60,8 @@ export function TslCodeEditor() {
 function GraphEditorUnit({}: {}) {
   const { materialSlug } = useParams();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [tslCode, setCode] = useState(
-    `
+  const [tslCode, setCode] = useState(() => {
+    return `
 import * as THREE from 'three/webgpu'
 import * as TSL from 'three/tsl'
 
@@ -74,8 +74,8 @@ return async function materialFunction () {
     return mat;
 }
 
-`.trim(),
-  );
+`.trim();
+  });
 
   const handleMount: OnMount = (editor) => {
     // Rely on `automaticLayout` (set by @monaco-editor/react) to fill the pane.
@@ -94,17 +94,25 @@ return async function materialFunction () {
   }, [materialSlug]);
 
   const [json, setJSON] = useState<any>(null);
-  const { translateAsync } = useTranslationService();
+  const { translateAsync, ready } = useTranslationService();
 
   useEffect(() => {
+    if (!ready) {
+      return;
+    }
     if (!tslCode) {
       return;
     }
 
     translateAsync(`${tslCode}`)?.then((result: any) => {
+      console.log(result.jsonGraph);
       setJSON(result.jsonGraph);
     });
-  }, [tslCode]);
+  }, [tslCode, ready]);
+
+  if (!ready) {
+    return null;
+  }
 
   return (
     <>
@@ -145,9 +153,8 @@ return async function materialFunction () {
 }
 
 function GraphUISection({ tslCode = "" }) {
+  const { translateAsync, ready } = useTranslationService();
   const [json, setJSON] = useState<any>(null);
-  const { translateAsync } = useTranslationService();
-
   useEffect(() => {
     if (!tslCode) {
       return;
@@ -156,7 +163,11 @@ function GraphUISection({ tslCode = "" }) {
     translateAsync(`${tslCode}`)?.then((result: any) => {
       setJSON(result.jsonGraph);
     });
-  }, [tslCode]);
+  }, [tslCode, ready]);
+
+  if (!ready) {
+    return null;
+  }
 
   return (
     <div className="w-full h-full">

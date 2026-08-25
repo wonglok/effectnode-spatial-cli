@@ -33,6 +33,7 @@ export const useTranslationService = () => {
       if (!worker) {
         return;
       }
+
       const id = crypto.randomUUID();
 
       worker.postMessage(
@@ -52,6 +53,7 @@ export const useTranslationService = () => {
   return {
     //
     translateAsync,
+    ready: !!worker,
     //
   };
   //
