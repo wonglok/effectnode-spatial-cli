@@ -13,7 +13,6 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { MaterialGraphJSON, SerializedNode } from "./worker/types";
-import { MaterialPreviewMesh } from "./MaterialPreviewMesh";
 
 // ---------------------------------------------------------------------------
 // A React Flow (@xyflow/react) node-graph editor for a serialized TSL
@@ -345,7 +344,7 @@ export function GraphNodeUI({ json }: { json: MaterialGraphJSON }) {
       >
         <Background color="#1e293b" gap={20} />
         <Controls className="!bg-slate-900 !text-slate-200" />
-        <MiniMap
+        {/* <MiniMap
           pannable
           zoomable
           nodeColor={(n) => {
@@ -354,7 +353,7 @@ export function GraphNodeUI({ json }: { json: MaterialGraphJSON }) {
           }}
           maskColor="rgba(15, 23, 42, 0.7)"
           className="!bg-slate-900"
-        />
+        /> */}
       </ReactFlow>
     </div>
   );

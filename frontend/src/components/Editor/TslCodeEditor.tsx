@@ -113,7 +113,7 @@ return async function materialFunction () {
       {/*  */}
       <div className="w-full h-full">
         <Editor
-          height="50%"
+          height="33%"
           language="typescript"
           theme="vs-dark"
           value={tslCode}
@@ -121,12 +121,12 @@ return async function materialFunction () {
           onMount={handleMount}
           options={EDITOR_OPTIONS}
         />
-        {/* <div className="w-full h-1/3">
+        <div className="w-full h-1/3">
           <div className="w-full h-full">
             {tslCode && <GraphUISection tslCode={tslCode}></GraphUISection>}
           </div>
-        </div> */}
-        <div className="w-full h-1/2">
+        </div>
+        <div className="w-full h-1/3">
           {
             <WebGPUCanvas>
               <MaterialPreviewMesh tslCode={tslCode}></MaterialPreviewMesh>
@@ -145,9 +145,13 @@ function GraphUISection({ tslCode = "" }) {
   const { translateAsync } = useTranslationService();
 
   useEffect(() => {
+    if (!tslCode) {
+      return;
+    }
+
     translateAsync(`${tslCode}`)?.then((result: any) => {
-      console.log(result);
-      setJSON(result);
+      console.log(result.jsonGraph);
+      setJSON(result.jsonGraph);
     });
   }, [tslCode]);
 

@@ -64,9 +64,9 @@ export function MaterialPreviewMesh({ tslCode = "" }: { tslCode: string }) {
         //
         //
 
-        console.log(r.jsonGraph);
-        let tslCode = jsonToCode(r.jsonGraph);
-        console.log(tslCode);
+        // console.log(r.jsonGraph);
+        // let tslCode = jsonToCode(r.jsonGraph);
+        // console.log(tslCode);
 
         // Hydrate -> Re-created Material using auto-populated registry
         const restoredMaterial = hydrateJSONToNodeMaterial(

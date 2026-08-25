@@ -39,7 +39,6 @@ self.onmessage = (ev) => {
 
     code = noImportLines.join("\n");
 
-    console.log(importCode);
     code = `${importCode}\n${code}`;
 
     let codeEval = new Function("TSL", "THREE", code);
