@@ -21,10 +21,7 @@ self.onmessage = (ev) => {
     for (let kn in TSL) {
       if (lowerArr.includes(kn.charAt(0))) {
         //
-        console.log(kn);
-
         let line = `const ${kn} = TSL["${kn}"]\n`;
-
         str += line;
         //
       }
