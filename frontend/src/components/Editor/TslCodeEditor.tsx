@@ -9,11 +9,11 @@ import { useParams } from "react-router-dom";
 
 import { useTranslationService } from "./worker/use-translator";
 import { WebGPUCanvas } from "../../sdk/ui/WebGPUCanvas";
-import { GraphNodeUI } from "./GraphNodeUI";
+// import { GraphNodeUI } from "./GraphNodeUI";
 import { MaterialPreviewGarphMesh } from "./MaterialPreviewMesh";
 import { Environment, OrbitControls } from "@react-three/drei";
-import { MaterialGraphJSON } from "./worker/types";
-import { jsonToCode } from "./worker/json-to-code";
+// import { MaterialGraphJSON } from "./worker/types";
+// import { jsonToCode } from "./worker/json-to-code";
 
 // ---------------------------------------------------------------------------
 // Serve Monaco's web workers from locally-bundled files (via Vite's ?worker)
