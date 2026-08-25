@@ -90,7 +90,11 @@ export function parseNodeMaterialToJSON(
       if (key.startsWith("_") || key === "uuid" || key === "id") continue;
       if (key in data) continue;
       const val = (node as any)[key];
-      if (val !== null && typeof val !== "function" && typeof val !== "object") {
+      if (
+        val !== null &&
+        typeof val !== "function" &&
+        typeof val !== "object"
+      ) {
         customData[key] = val;
       }
     }
