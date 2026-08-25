@@ -30,7 +30,7 @@ import {
 } from "three/webgpu";
 import { useTranslationService } from "./worker/use-translator";
 import { WebGPUCanvas } from "../../sdk/ui/WebGPUCanvas";
-import { Environment } from "@react-three/drei";
+import { Environment, OrbitControls } from "@react-three/drei";
 import { hydrateJSONToNodeMaterial } from "./worker/materialParser";
 import { defaultNodeRegistry } from "./worker/nodeRegistry";
 // import { tslToJSON } from "../../sdk/code-material-json/convertTSLCodeToJSONAll";
@@ -129,6 +129,7 @@ return async function materialFunction ({ THREE, TSL }) {
             <WebGPUCanvas>
               <MaterialPreviewMesh tslCode={tslCode}></MaterialPreviewMesh>
               <Environment files={[`/hdr/venice_sunset_1k.hdr`]}></Environment>
+              <OrbitControls></OrbitControls>
             </WebGPUCanvas>
           }
         </div>
@@ -157,7 +158,7 @@ function MaterialPreviewMesh({ tslCode = "" }: { tslCode: string }) {
           setMaterial(
             <>
               <mesh material={restoredMaterial}>
-                <sphereGeometry></sphereGeometry>
+                <sphereGeometry args={[1, 64, 64]}></sphereGeometry>
               </mesh>
             </>,
           );
