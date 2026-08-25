@@ -8,11 +8,10 @@ import TSLGraphEditorDefault from "three/addons/inspector/extensions/tsl-graph/T
 import { TSLGraphEditor } from "three/addons/inspector/extensions/tsl-graph/TSLGraphEditor.js";
 import { MeshPhysicalNodeMaterial } from "three/webgpu";
 import { GraphNodeUI } from "../../components/Editor/GraphNodeUI";
-import { MaterialPreviewMesh } from "../../components/Editor/MaterialPreviewMesh";
-import { jsonToCode } from "../../components/Editor/worker/json-to-code";
 import { useTranslationService } from "../../components/Editor/worker/use-translator";
 import { WebGPUCanvas } from "../../sdk/ui/WebGPUCanvas";
 import { Environment, OrbitControls } from "@react-three/drei";
+import { MaterialPreviewCodeMesh } from "../../components/Editor/MaterialPreviewMesh";
 
 /**
  * Node-graph editor backed by three.js's official TSL Graph Editor.
@@ -554,11 +553,15 @@ export function GraphEditorPage() {
     <>
       <div className="w-full h-full">
         <div className="w-full h-1/2">
-          {json && <GraphNodeUI json={json}></GraphNodeUI>}
+          {json && (
+            <GraphNodeUI key={JSON.stringify(json)} json={json}></GraphNodeUI>
+          )}
         </div>
         <div className="w-full h-1/2">
           <WebGPUCanvas>
-            <MaterialPreviewMesh tslCode={tslCode}></MaterialPreviewMesh>
+            <MaterialPreviewCodeMesh
+              tslCode={tslCode}
+            ></MaterialPreviewCodeMesh>
             <OrbitControls makeDefault></OrbitControls>
             <Environment files={[`/hdr/venice_sunset_1k.hdr`]}></Environment>
           </WebGPUCanvas>

@@ -3,18 +3,8 @@ import * as monaco from "monaco-editor";
 import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
 import TsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { MeshStandardNodeMaterial, NodeMaterialLoader } from "three/webgpu";
-
-// import * as THREE from "three/webgpu";
-// import * as TSL from "three/tsl";
-// import {
-//   hydrateJSONToNodeMaterial,
-//   parseNodeMaterialToJSON,
-// } from "../../sdk/code-material-json/materialParser";
-// import { defaultNodeRegistry } from "../../sdk/code-material-json/nodeRegistry";
-// import { GlbViewerPage } from "../../pages/materialEditor/GlbViewerPage";
 import { useParams } from "react-router-dom";
 
 // @ts-ignore
@@ -26,12 +16,9 @@ import { useParams } from "react-router-dom";
 import { MeshPhysicalNodeMaterial } from "three/webgpu";
 import { useTranslationService } from "./worker/use-translator";
 import { WebGPUCanvas } from "../../sdk/ui/WebGPUCanvas";
-import { Environment, OrbitControls } from "@react-three/drei";
-import { hydrateJSONToNodeMaterial } from "./worker/materialParser";
-import { defaultNodeRegistry } from "./worker/nodeRegistry";
-import { jsonToCode } from "./worker/json-to-code";
 import { GraphNodeUI } from "./GraphNodeUI";
-import { MaterialPreviewMesh } from "./MaterialPreviewMesh";
+import { MaterialPreviewGarphMesh } from "./MaterialPreviewMesh";
+import { Environment, OrbitControls } from "@react-three/drei";
 // import { tslToJSON } from "../../sdk/code-material-json/convertTSLCodeToJSONAll";
 // import {
 //   convertJsonToTSLCodeAll,
@@ -106,6 +93,19 @@ return async function materialFunction () {
     };
   }, [materialSlug]);
 
+  const [json, setJSON] = useState<any>(null);
+  const { translateAsync } = useTranslationService();
+
+  useEffect(() => {
+    if (!tslCode) {
+      return;
+    }
+
+    translateAsync(`${tslCode}`)?.then((result: any) => {
+      setJSON(result.jsonGraph);
+    });
+  }, [tslCode]);
+
   return (
     <>
       {/*  */}
@@ -129,7 +129,11 @@ return async function materialFunction () {
         <div className="w-full h-1/3">
           {
             <WebGPUCanvas>
-              <MaterialPreviewMesh tslCode={tslCode}></MaterialPreviewMesh>
+              {json && (
+                <MaterialPreviewGarphMesh
+                  jsonGraph={json}
+                ></MaterialPreviewGarphMesh>
+              )}
               <OrbitControls makeDefault></OrbitControls>
               <Environment files={[`/hdr/venice_sunset_1k.hdr`]}></Environment>
             </WebGPUCanvas>
@@ -141,7 +145,7 @@ return async function materialFunction () {
 }
 
 function GraphUISection({ tslCode = "" }) {
-  let [json, setJSON] = useState<any>(null);
+  const [json, setJSON] = useState<any>(null);
   const { translateAsync } = useTranslationService();
 
   useEffect(() => {
@@ -156,7 +160,9 @@ function GraphUISection({ tslCode = "" }) {
 
   return (
     <div className="w-full h-full">
-      {json && <GraphNodeUI json={json}></GraphNodeUI>}
+      {json && (
+        <GraphNodeUI key={JSON.stringify(json)} json={json}></GraphNodeUI>
+      )}
     </div>
   );
 }

@@ -1,8 +1,3 @@
-import { loader, type OnMount } from "@monaco-editor/react";
-import * as monaco from "monaco-editor";
-import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
-import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
-import TsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 
 // import * as THREE from "three/webgpu";
@@ -25,37 +20,9 @@ import { useTranslationService } from "./worker/use-translator";
 import { hydrateJSONToNodeMaterial } from "./worker/materialParser";
 import { defaultNodeRegistry } from "./worker/nodeRegistry";
 import { jsonToCode } from "./worker/json-to-code";
-// import { tslToJSON } from "../../sdk/code-material-json/convertTSLCodeToJSONAll";
-// import {
-//   convertJsonToTSLCodeAll,
-//   generateTSLCode,
-// } from "../../sdk/code-material-json/convertJsonToTSLCodeAll";
+import { MaterialGraphJSON } from "./worker/types";
 
-// ---------------------------------------------------------------------------
-// Serve Monaco's web workers from locally-bundled files (via Vite's ?worker)
-// instead of the default CDN, keeping the app CORS-safe and offline-capable.
-// ---------------------------------------------------------------------------
-self.MonacoEnvironment = {
-  getWorker(_workerId: string, label: string) {
-    if (label === "typescript" || label === "javascript") return new TsWorker();
-    if (label === "json") return new JsonWorker();
-    return new EditorWorker();
-  },
-};
-
-// Point @monaco-editor/react's loader at the locally-installed monaco (no CDN).
-loader.config({ monaco });
-
-const EDITOR_OPTIONS: monaco.editor.IStandaloneEditorConstructionOptions = {
-  minimap: { enabled: false },
-  fontSize: 13,
-  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-  scrollBeyondLastLine: false,
-  tabSize: 4,
-  wordWrap: "on",
-};
-
-export function MaterialPreviewMesh({ tslCode = "" }: { tslCode: string }) {
+export function MaterialPreviewCodeMesh({ tslCode = "" }: { tslCode: string }) {
   const { translateAsync } = useTranslationService();
   const [material, setMaterial] = useState<any>(null);
   useEffect(() => {
@@ -93,6 +60,38 @@ export function MaterialPreviewMesh({ tslCode = "" }: { tslCode: string }) {
       setMaterial(null);
     };
   }, [translateAsync, tslCode]);
+
+  return <group>{material}</group>;
+}
+
+export function MaterialPreviewGarphMesh({
+  jsonGraph,
+}: {
+  jsonGraph: MaterialGraphJSON;
+}) {
+  const { translateAsync } = useTranslationService();
+  const [material, setMaterial] = useState<any>(null);
+  useEffect(() => {
+    const restoredMaterial = hydrateJSONToNodeMaterial(
+      jsonGraph,
+      MeshPhysicalNodeMaterial,
+      defaultNodeRegistry,
+    );
+
+    setTimeout(() => {
+      setMaterial(
+        <>
+          <mesh material={restoredMaterial}>
+            <sphereGeometry args={[1, 64, 64]}></sphereGeometry>
+          </mesh>
+        </>,
+      );
+    });
+
+    return () => {
+      setMaterial(null);
+    };
+  }, [translateAsync, jsonGraph]);
 
   return <group>{material}</group>;
 }
