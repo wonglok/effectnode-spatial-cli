@@ -1,10 +1,10 @@
-import type { Node, NodeMaterial } from "three/webgpu";
+import type { Node } from "three/webgpu";
 
 export interface SerializedNode {
-  id: string;
-  type: string; // Class name (e.g., 'FloatNode', 'ColorNode', 'OperatorNode')
-  value?: any; // Value stored on uniform / constant nodes
-  properties: Record<string, any>; // Primitive properties (e.g. 'op', 'nodeType')
+  id: string; // Node uuid (stable across serialization)
+  type: string; // Stable node type from the class's static `type` getter (e.g. 'OperatorNode')
+  data: Record<string, any>; // Output of node.serialize(): `inputNodes` (child uuids) + class fields
+  customData: Record<string, any>; // Primitive own-props not covered by serialize (e.g. VarNode.intent)
 }
 
 export interface SerializedEdge {
