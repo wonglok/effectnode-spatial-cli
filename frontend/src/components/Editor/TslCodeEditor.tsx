@@ -144,6 +144,9 @@ return async function materialFunction ({ THREE, TSL }) {
 
   return (
     <>
+      {/*  */}
+      {/*  */}
+      {/*  */}
       <div className="w-full h-full">
         <Editor
           height="50%"
