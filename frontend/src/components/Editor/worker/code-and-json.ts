@@ -41,12 +41,12 @@ self.onmessage = (ev) => {
     let resultFunc = codeEval(TSL, THREE);
 
     resultFunc({})
-      .then((result: any) => {
+      .then((instace: any) => {
         // console.log(material);
 
         // Parse -> JSON
 
-        const jsonGraph = parseNodeMaterialToJSON(result.material);
+        const jsonGraph = parseNodeMaterialToJSON(instace);
 
         // console.log(jsonGraph);
 

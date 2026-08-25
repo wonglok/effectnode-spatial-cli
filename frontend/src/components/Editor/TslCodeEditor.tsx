@@ -92,7 +92,7 @@ return async function materialFunction () {
 
     material.colorNode = vec3(uv().y.mul(0.5).add(0.5).mul(1.5), float(uv().x), float(0.3));
 
-    return { material };
+    return material;
 }
 
 `.trim(),
@@ -152,7 +152,7 @@ function MaterialPreviewMesh({ tslCode = "" }: { tslCode: string }) {
         //
         //
 
-        console.log(r.jsonGraph);
+        // console.log(r.jsonGraph);
 
         let tslCode = jsonToCode(r.jsonGraph);
 
