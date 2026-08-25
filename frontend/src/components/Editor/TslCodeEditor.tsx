@@ -3,7 +3,9 @@ import * as monaco from "monaco-editor";
 import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
 import TsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+
+import { MeshStandardNodeMaterial, NodeMaterialLoader } from "three/webgpu";
 
 // import * as THREE from "three/webgpu";
 // import * as TSL from "three/tsl";
@@ -16,12 +18,21 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
 // @ts-ignore
-import TSLGraphEditor from "three/examples/jsm/inspector/extensions/tsl-graph/TSLGraphEditor.js";
+// import TSLGraphEditor from "three/examples/jsm/inspector/extensions/tsl-graph/TSLGraphEditor.js";
 // import { TSLGraphLoader } from "three/examples/jsm/inspector/extensions/tsl-graph/TSLGraphLoader.js";
 // import { Inspector } from "three/addons/inspector/Inspector.js";
 
 // import TSLGraphEditorDefault from "three/addons/inspector/extensions/tsl-graph/TSLGraphEditor.js";
-import { InspectorBase, MeshPhysicalNodeMaterial } from "three/webgpu";
+import {
+  MeshPhysicalNodeMaterial,
+  NodeMaterial,
+  NodeMaterialObserver,
+} from "three/webgpu";
+import { useTranslationService } from "./worker/use-translator";
+import { WebGPUCanvas } from "../../sdk/ui/WebGPUCanvas";
+import { Environment } from "@react-three/drei";
+import { hydrateJSONToNodeMaterial } from "./worker/materialParser";
+import { defaultNodeRegistry } from "./worker/nodeRegistry";
 // import { tslToJSON } from "../../sdk/code-material-json/convertTSLCodeToJSONAll";
 // import {
 //   convertJsonToTSLCodeAll,
@@ -63,76 +74,58 @@ export function TslCodeEditor() {
 function GraphEditorUnit({}: {}) {
   const { materialSlug } = useParams();
   const containerRef = useRef<HTMLDivElement>(null);
-  const editorRef = useRef<TSLGraphEditor | null>(null);
-  const [tslCode, setCode] = useState(``);
+  const [tslCode, setCode] =
+    useState(`return async function genFunction ({ THREE, TSL }) {
+
+    const mat = new THREE.MeshPhysicalNodeMaterial({
+      name: 'loklok'
+    })
+
+    mat.color = new THREE.Color("#ff0000");
+    mat.colorNode = TSL.vec3(TSL.uv().x, 0.0, TSL.float(0.0));
+
+    return mat
+}
+
+`);
 
   const handleMount: OnMount = (editor) => {
     // Rely on `automaticLayout` (set by @monaco-editor/react) to fill the pane.
     editor.focus();
   };
 
-  const material = useMemo(() => {
-    const material = new MeshPhysicalNodeMaterial();
-    material.userData.graphId = `material:${materialSlug ?? "untitled"}`;
-    return material;
-  }, []);
-
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
-
-    const inspector = new InspectorBase();
-    const editor = new TSLGraphEditor(inspector) as TSLGraphEditor;
-    editorRef.current = editor;
-
-    // `content` is the DOM root the Tab base class builds (header + iframe).
-    // It isn't exposed on the TSLGraphEditor type, so read it via a narrow cast.
-    const content = (editor as unknown as { content: HTMLDivElement }).content;
-
-    // Mount the editor's DOM (header + iframe) into our page.
-    container.appendChild(content);
-
-    // The editor needs a NodeMaterial to edit; give it a default physical
-    // material keyed by the material's slug until real graph persistence lands.
-    editor.setMaterial(material).catch((err: unknown) => {
-      console.warn("TSL Graph Editor failed to attach material:", err);
-    });
-
-    editor.getGraph().then((graph: any) => {
-      console.log(graph);
-    });
-
-    editor.getCode().then((info: any) => {
-      console.log(info?.material);
-
-      if (info?.material) {
-      }
-    });
-
-    //
-
-    // const loader = new TSLGraphLoader() as any;
-    // const applier = loader.parse(editor.getCodes() as any);
-    // applier.apply(scene);
-
-    return () => {
-      if (container.contains(content)) {
-        container.removeChild(content);
-      }
-      editorRef.current = null;
-    };
-  }, [materialSlug]);
-
-  useEffect(() => {
-    //
-    if (!editorRef.current) {
+    if (!container) {
       return;
     }
 
-    //
+    return () => {
+      //
+    };
+  }, [materialSlug]);
 
-    //
-  }, [tslCode]);
+  const { translateAsync } = useTranslationService();
+
+  const [material, setMaterial] = useState<any>(null);
+  useEffect(() => {
+    translateAsync(`${tslCode}`)
+      ?.then((r: any) => {
+        //
+
+        // Hydrate -> Re-created Material using auto-populated registry
+        const restoredMaterial = hydrateJSONToNodeMaterial(
+          r.jsonGraph,
+          MeshPhysicalNodeMaterial,
+          defaultNodeRegistry,
+        );
+
+        setMaterial(restoredMaterial);
+      })
+      .catch((r) => {
+        console.error(r);
+      });
+  }, [translateAsync, tslCode]);
 
   return (
     <>
@@ -146,7 +139,20 @@ function GraphEditorUnit({}: {}) {
           onMount={handleMount}
           options={EDITOR_OPTIONS}
         />
-        <div ref={containerRef} className="h-1/2 w-full" />
+        <div className="w-full h-1/2">
+          <WebGPUCanvas>
+            {/*  */}
+            {material && (
+              <mesh material={material} key={material?.uuid}>
+                <sphereGeometry></sphereGeometry>
+              </mesh>
+            )}
+
+            <Suspense fallback={null}>
+              <Environment preset="city"></Environment>
+            </Suspense>
+          </WebGPUCanvas>
+        </div>
       </div>
     </>
   );
