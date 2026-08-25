@@ -15,6 +15,7 @@ import {
   MaterialPreviewCodeMesh,
   MaterialPreviewGarphMesh,
 } from "../../components/Editor/MaterialPreviewMesh";
+import { jsonToCode } from "../../components/Editor/worker/json-to-code";
 
 /**
  * Node-graph editor backed by three.js's official TSL Graph Editor.
@@ -559,6 +560,11 @@ export function GraphEditorPage() {
               json={json}
               onMaterialGraphJSONChange={(json) => {
                 setJSON(json as any);
+                let code = jsonToCode(json);
+
+                // save to server
+
+                //
               }}
             ></GraphNodeUI>
           )}
