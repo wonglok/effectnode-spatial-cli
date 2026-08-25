@@ -21,6 +21,8 @@ import { hydrateMaterialAsync } from "./worker/materialParser";
 import { defaultNodeRegistry } from "./worker/nodeRegistry";
 // import { jsonToCode } from "./worker/json-to-code";
 import { MaterialGraphJSON } from "./worker/types";
+import { float, time } from "three/tsl";
+import { useFrame } from "@react-three/fiber";
 
 // export function MaterialPreviewCodeMesh({ tslCode = "" }: { tslCode: string }) {
 //   const { translateAsync } = useTranslationService();

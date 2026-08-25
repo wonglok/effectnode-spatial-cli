@@ -61,11 +61,16 @@ export function parseNodeMaterialToJSON(
   const seen = new Set<Node>();
   const matObj = material as any;
   let hasFn = false;
+  let hasTime = false;
 
   function collect(node: Node): void {
     if (!node || typeof node !== "object" || seen.has(node)) return;
     seen.add(node);
     if ((node as any).isShaderCallNodeInternal || (node as any).isFn) hasFn = true;
+    // Time / timer / animated uniforms register a per-frame update whose
+    // callback is a function and therefore not serializable — flag them so the
+    // source can be re-evaluated on hydrate.
+    if ((node as any).updateType === "render") hasTime = true;
     liveNodes.push(node);
     for (const { childNode } of (node as any).getSerializeChildren()) {
       collect(childNode);
@@ -115,9 +120,9 @@ export function parseNodeMaterialToJSON(
     // Child links now live in each node's `data.inputNodes`; kept for the
     // MaterialGraphJSON shape (see backend `MaterialGraph`).
     edges: [],
-    // TSL.Fn bodies are arbitrary JS and can't be reconstructed from the graph,
-    // so carry the original source for the hydrate step to re-evaluate.
-    ...(hasFn && sourceCode ? { sourceCode } : {}),
+    // TSL.Fn bodies and time/timer uniforms can't be reconstructed from the
+    // graph, so carry the original source for the hydrate step to re-evaluate.
+    ...(sourceCode && (hasFn || hasTime) ? { sourceCode } : {}),
   };
 }
 
@@ -210,19 +215,24 @@ function graphHasFn(json: MaterialGraphJSON): boolean {
   );
 }
 
+function graphHasTime(json: MaterialGraphJSON): boolean {
+  return json.nodes.some((n) => n.customData?.updateType === "render");
+}
+
 /**
  * Hydrates a material from a graph, re-evaluating the original source only when
- * the graph actually contains `TSL.Fn` nodes. A graph edited in the editor
- * carries a stale `sourceCode` (persisted by the store), so presence of
- * `sourceCode` alone is not enough to decide whether to re-evaluate — that
- * would ignore in-place node edits.
+ * the graph actually contains `TSL.Fn` nodes or time/timer uniforms (whose
+ * per-frame callbacks are functions and can't be rebuilt from the graph). A
+ * graph edited in the editor carries a stale `sourceCode` (persisted by the
+ * store), so presence of `sourceCode` alone is not enough to decide whether to
+ * re-evaluate — that would ignore in-place node edits.
  */
 export async function hydrateMaterialAsync<T extends NodeMaterial>(
   json: MaterialGraphJSON,
   MaterialClass: new () => T,
   registry: NodeRegistry = defaultNodeRegistry,
 ): Promise<any> {
-  if (json.sourceCode && graphHasFn(json)) {
+  if (json.sourceCode && (graphHasFn(json) || graphHasTime(json))) {
     return evaluateTSLCode(json.sourceCode);
   }
   return hydrateJSONToNodeMaterial(json, MaterialClass, registry);
