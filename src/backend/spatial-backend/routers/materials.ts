@@ -3,8 +3,10 @@ import {
   createMaterial,
   deleteMaterial,
   listMaterials,
+  listMaterialBackups,
   loadMaterialGraph,
   renameMaterial,
+  restoreMaterialBackup,
   saveMaterialGraph,
   type MaterialGraph,
 } from "../materials.js";
@@ -90,6 +92,37 @@ materialsRouter.put(
         req.params.projectID,
         req.params.materialSlug,
         req.body as MaterialGraph,
+      );
+      res.status(204).end();
+    } catch (err) {
+      res.status(404).json({ error: (err as Error).message });
+    }
+  },
+);
+
+// GET /api/projects/:projectID/materials/:materialSlug/backups — list backups.
+materialsRouter.get(
+  "/:projectID/materials/:materialSlug/backups",
+  async (req, res) => {
+    try {
+      res.json(
+        await listMaterialBackups(req.params.projectID, req.params.materialSlug),
+      );
+    } catch (err) {
+      res.status(404).json({ error: (err as Error).message });
+    }
+  },
+);
+
+// POST /api/projects/:projectID/materials/:materialSlug/backups/:backupId/restore
+materialsRouter.post(
+  "/:projectID/materials/:materialSlug/backups/:backupId/restore",
+  async (req, res) => {
+    try {
+      await restoreMaterialBackup(
+        req.params.projectID,
+        req.params.materialSlug,
+        req.params.backupId,
       );
       res.status(204).end();
     } catch (err) {

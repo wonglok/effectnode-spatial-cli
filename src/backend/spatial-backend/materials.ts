@@ -21,6 +21,12 @@ export interface MaterialMetadata {
   updatedAt: string;
 }
 
+/** A saved snapshot of a material, keyed by a millisecond-timestamp id. */
+export interface MaterialBackup {
+  id: string;
+  createdAt: string;
+}
+
 /** Serialized TSL node graph — see frontend/src/sdk/material-json/types.ts. */
 export interface MaterialGraph {
   materialType: string;
@@ -52,6 +58,20 @@ const materialsAbs = (id: string): string =>
   path.join(projectDir(id), "materials");
 const materialAbs = (id: string, slug: string): string =>
   path.join(materialsAbs(id), slug);
+
+// Backups live in projects/<id>/materials/<slug>/backups/<backupId>/material.json.
+const backupsRel = (id: string, slug: string, backupId: string): string =>
+  path.join(
+    "projects",
+    id,
+    "materials",
+    slug,
+    "backups",
+    backupId,
+    "material.json",
+  );
+const backupsAbs = (id: string, slug: string): string =>
+  path.join(materialAbs(id, slug), "backups");
 
 // Slug format produced by slugify(). Reject anything else so a user-supplied
 // material slug (URL param) can't traverse out of the materials dir.
@@ -174,7 +194,64 @@ export async function saveMaterialGraph(
 ): Promise<void> {
   assertMaterialSlug(materialSlug);
   const id = await resolveProjectId(projectSlug);
+
+  // Back up the previous version before overwriting it.
+  const previous = await readJson<MaterialGraph | null>(
+    graphRel(id, materialSlug),
+    null,
+  );
+  if (previous) {
+    const backupId = Date.now().toString();
+    await writeJson(backupsRel(id, materialSlug, backupId), previous);
+  }
+
   await writeJson(graphRel(id, materialSlug), graph);
+  const meta = await readJson<MaterialMetadata | null>(
+    metadataRel(id, materialSlug),
+    null,
+  );
+  if (meta) {
+    await writeMetadata(id, { ...meta, updatedAt: new Date().toISOString() });
+  }
+}
+
+export async function listMaterialBackups(
+  projectSlug: string,
+  materialSlug: string,
+): Promise<MaterialBackup[]> {
+  assertMaterialSlug(materialSlug);
+  const id = await resolveProjectId(projectSlug);
+  let entries;
+  try {
+    entries = await fs.readdir(backupsAbs(id, materialSlug), {
+      withFileTypes: true,
+    });
+  } catch {
+    return [];
+  }
+  return entries
+    .filter((e) => e.isDirectory() && /^[0-9]+$/.test(e.name))
+    .map((e) => ({
+      id: e.name,
+      createdAt: new Date(Number(e.name)).toISOString(),
+    }))
+    .sort((a, b) => Number(b.id) - Number(a.id)); // newest first
+}
+
+export async function restoreMaterialBackup(
+  projectSlug: string,
+  materialSlug: string,
+  backupId: string,
+): Promise<void> {
+  assertMaterialSlug(materialSlug);
+  if (!/^[0-9]+$/.test(backupId)) throw new Error("Invalid backup ID");
+  const id = await resolveProjectId(projectSlug);
+  const backup = await readJson<MaterialGraph | null>(
+    backupsRel(id, materialSlug, backupId),
+    null,
+  );
+  if (!backup) throw new Error("Backup not found");
+  await writeJson(graphRel(id, materialSlug), backup);
   const meta = await readJson<MaterialMetadata | null>(
     metadataRel(id, materialSlug),
     null,

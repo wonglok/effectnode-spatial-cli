@@ -73,7 +73,7 @@ export function MaterialPreviewGarphMesh({
   const [material, setMaterial] = useState<any>(null);
 
   let sphGeo = useMemo(() => {
-    return new SphereGeometry(1, 64, 64);
+    return new SphereGeometry(1, 256, 256);
   }, []);
 
   useEffect(() => {

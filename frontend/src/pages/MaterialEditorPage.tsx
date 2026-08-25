@@ -7,6 +7,7 @@ import {
   IconCode,
   IconEffects,
   IconMaterials,
+  IconUndo,
 } from "../components/icons";
 import { useProjectsStore } from "../store/projectsStore";
 import { useMaterialsStore } from "../store/materialsStore";
@@ -23,6 +24,7 @@ const TABS: Tab[] = [
   { segment: "ai-chat", label: "AI Chat", icon: IconChat },
   { segment: "tsl-code-editor", label: "TSL Code", icon: IconCode },
   { segment: "graph-editor", label: "Graph Editor", icon: IconEffects },
+  { segment: "backups", label: "Backups", icon: IconUndo },
 ];
 
 export function MaterialEditorPage() {
