@@ -586,7 +586,6 @@ export function GraphEditorPage() {
           <WebGPUCanvas>
             {json && (
               <MaterialPreviewGarphMesh
-                // key={JSON.stringify(json)}
                 jsonGraph={json}
               ></MaterialPreviewGarphMesh>
             )}
