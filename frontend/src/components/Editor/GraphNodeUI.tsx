@@ -586,7 +586,11 @@ const nodeTypes: NodeTypes = {
 };
 
 const defaultEdgeOptions = {
-  type: "smoothstep",
+  // type: "smoothstep",
+  type: "default",
+  pathOptions: {
+    curvature: 1,
+  },
   markerEnd: { type: "arrowclosed" as const, color: "#64748b" },
   style: { stroke: "#64748b", strokeWidth: 1.5 },
 };

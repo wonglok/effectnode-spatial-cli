@@ -11,6 +11,7 @@ import { useTranslationService } from "./worker/use-translator";
 import { WebGPUCanvas } from "../../sdk/ui/WebGPUCanvas";
 // import { GraphNodeUI } from "./GraphNodeUI";
 import { MaterialPreviewGarphMesh } from "./MaterialPreviewMesh";
+import { useMaterialEditorStore } from "../../store/materialEditorStore";
 import { Environment, OrbitControls } from "@react-three/drei";
 // import { MaterialGraphJSON } from "./worker/types";
 // import { jsonToCode } from "./worker/json-to-code";
@@ -48,7 +49,7 @@ export function TslCodeEditor() {
 }
 
 function GraphEditorUnit({}: {}) {
-  const { materialSlug } = useParams();
+  const { projectID, materialSlug } = useParams();
   const containerRef = useRef<HTMLDivElement>(null);
   const [tslCode, setCode] = useState(() => {
     return `
@@ -92,6 +93,19 @@ return async function materialFunction() {
   const [json, setJSON] = useState<any>(null);
   const { translateAsync, ready } = useTranslationService();
 
+  const load = useMaterialEditorStore((s) => s.load);
+  const save = useMaterialEditorStore((s) => s.save);
+  const setTslCode = useMaterialEditorStore((s) => s.setTslCode);
+  const setJson = useMaterialEditorStore((s) => s.setJson);
+
+  // Load the stored TSL code from the backend.
+  useEffect(() => {
+    if (!projectID || !materialSlug) return;
+    load(projectID, materialSlug).then((code) => {
+      if (code) setCode(code);
+    });
+  }, [projectID, materialSlug, load]);
+
   useEffect(() => {
     if (!ready) {
       return;
@@ -101,10 +115,21 @@ return async function materialFunction() {
     }
 
     translateAsync(`${tslCode}`)?.then((result: any) => {
-      console.log(result.jsonGraph);
       setJSON(result.jsonGraph);
+      setJson(result.jsonGraph);
     });
-  }, [tslCode, ready]);
+  }, [tslCode, ready, translateAsync, setJson]);
+
+  // Debounced save: keep the store in sync and persist the code to the backend.
+  useEffect(() => {
+    if (!projectID || !materialSlug) return;
+    setTslCode(tslCode);
+    if (json) setJson(json);
+    const timer = setTimeout(() => {
+      save(projectID, materialSlug).catch(() => {});
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [tslCode, json, projectID, materialSlug, setTslCode, setJson, save]);
 
   if (!ready) {
     return null;

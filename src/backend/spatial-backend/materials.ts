@@ -28,6 +28,9 @@ export interface MaterialGraph {
   materialSlots: Record<string, string>;
   nodes: unknown[];
   edges: unknown[];
+  // Original TSL source code (stored alongside the graph so the editor can
+  // reload the code, not just the node graph).
+  sourceCode?: string;
 }
 
 export const DEFAULT_MATERIAL: MaterialGraph = {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 // three ships the runtime as a default export (`export default TSLGraphEditor`)
 // while @types/three declares it as a named export — import the default and
@@ -8,14 +8,12 @@ import TSLGraphEditorDefault from "three/addons/inspector/extensions/tsl-graph/T
 import { TSLGraphEditor } from "three/addons/inspector/extensions/tsl-graph/TSLGraphEditor.js";
 import { MeshPhysicalNodeMaterial } from "three/webgpu";
 import { GraphNodeUI } from "../../components/Editor/GraphNodeUI";
-import { useTranslationService } from "../../components/Editor/worker/use-translator";
 import { WebGPUCanvas } from "../../sdk/ui/WebGPUCanvas";
 import { Environment, OrbitControls } from "@react-three/drei";
-import {
-  MaterialPreviewCodeMesh,
-  MaterialPreviewGarphMesh,
-} from "../../components/Editor/MaterialPreviewMesh";
+import { MaterialPreviewGarphMesh } from "../../components/Editor/MaterialPreviewMesh";
 import { jsonToCode } from "../../components/Editor/worker/json-to-code";
+import { useMaterialEditorStore } from "../../store/materialEditorStore";
+import type { MaterialGraphJSON } from "../../components/Editor/worker/types";
 
 /**
  * Node-graph editor backed by three.js's official TSL Graph Editor.
@@ -63,7 +61,7 @@ export function GraphEditorCore() {
   return <div ref={containerRef} className="h-full w-full" />;
 }
 
-const defaultData = {
+const defaultData: MaterialGraphJSON = {
   materialType: "MeshPhysicalNodeMaterial",
   rootNodeId: "dcda2b80-1597-4ef9-8917-2f28559512a3",
   materialSlots: {
@@ -536,20 +534,29 @@ return async function materialFunction () {
 
     return mat;
 }
+
 `;
 
 export function GraphEditorPage() {
-  let [json, setJSON] = useState(null);
-  const { translateAsync, ready } = useTranslationService();
+  const { projectID, materialSlug } = useParams();
+
+  const json = useMaterialEditorStore((s) => s.json);
+  const load = useMaterialEditorStore((s) => s.load);
+  const save = useMaterialEditorStore((s) => s.save);
+  const setTslCode = useMaterialEditorStore((s) => s.setTslCode);
+  const setJson = useMaterialEditorStore((s) => s.setJson);
 
   useEffect(() => {
-    let codeFromBackend = defaultCode;
-    //please use backend storage here
+    if (!projectID || !materialSlug) return;
 
-    translateAsync(`${codeFromBackend}`)?.then((result: any) => {
-      setJSON(result.jsonGraph);
+    load(projectID, materialSlug).then((code) => {
+      // New/empty material: seed it with the default TSL code + graph.
+      if (!code) {
+        setTslCode(defaultCode);
+        setJson(defaultData);
+      }
     });
-  }, [ready]);
+  }, [projectID, materialSlug, load, setTslCode, setJson]);
 
   return (
     <>
@@ -558,14 +565,14 @@ export function GraphEditorPage() {
           {json && (
             <GraphNodeUI
               json={json}
-              onMaterialGraphJSONChange={(json) => {
-                setJSON(json as any);
-                let tslCode = jsonToCode(json);
-
-                //please use backend storage here
-                // save to server
-
-                //
+              onMaterialGraphJSONChange={(nextJson) => {
+                setJson(nextJson);
+                jsonToCode(nextJson).then((code) => {
+                  setTslCode(code);
+                  if (projectID && materialSlug) {
+                    save(projectID, materialSlug).catch(() => {});
+                  }
+                });
               }}
             ></GraphNodeUI>
           )}
@@ -574,7 +581,7 @@ export function GraphEditorPage() {
           <WebGPUCanvas>
             {json && (
               <MaterialPreviewGarphMesh
-                jsonGraph={json as any}
+                jsonGraph={json}
               ></MaterialPreviewGarphMesh>
             )}
 
