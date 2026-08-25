@@ -11,7 +11,10 @@ import { GraphNodeUI } from "../../components/Editor/GraphNodeUI";
 import { useTranslationService } from "../../components/Editor/worker/use-translator";
 import { WebGPUCanvas } from "../../sdk/ui/WebGPUCanvas";
 import { Environment, OrbitControls } from "@react-three/drei";
-import { MaterialPreviewCodeMesh } from "../../components/Editor/MaterialPreviewMesh";
+import {
+  MaterialPreviewCodeMesh,
+  MaterialPreviewGarphMesh,
+} from "../../components/Editor/MaterialPreviewMesh";
 
 /**
  * Node-graph editor backed by three.js's official TSL Graph Editor.
@@ -538,16 +541,17 @@ export function GraphEditorPage() {
   let [tslCode, setTSLCode] = useState(defaultCode);
 
   let [json, setJSON] = useState(null);
-  const { translateAsync } = useTranslationService();
+  const { translateAsync, ready } = useTranslationService();
 
   useEffect(() => {
     if (!tslCode) {
       return;
     }
+    //
     translateAsync(`${tslCode}`)?.then((result: any) => {
       setJSON(result.jsonGraph);
     });
-  }, [tslCode]);
+  }, [tslCode, ready]);
 
   return (
     <>
@@ -559,10 +563,14 @@ export function GraphEditorPage() {
         </div>
         <div className="w-full h-1/2">
           <WebGPUCanvas>
-            <MaterialPreviewCodeMesh
-              tslCode={tslCode}
-            ></MaterialPreviewCodeMesh>
+            {json && (
+              <MaterialPreviewGarphMesh
+                jsonGraph={json as any}
+              ></MaterialPreviewGarphMesh>
+            )}
+
             <OrbitControls makeDefault></OrbitControls>
+
             <Environment files={[`/hdr/venice_sunset_1k.hdr`]}></Environment>
           </WebGPUCanvas>
         </div>
