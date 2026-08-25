@@ -16,7 +16,7 @@ import { MeshPhysicalNodeMaterial } from "three/webgpu";
  * `postMessage`. We mount just its content element here and drive it with
  * `setMaterial`, so editing a node updates the live NodeMaterial in place.
  */
-export function GraphEditorPage() {
+export function GraphEditorCore() {
   const { materialSlug } = useParams();
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<TSLGraphEditor | null>(null);
@@ -52,4 +52,8 @@ export function GraphEditorPage() {
   }, [materialSlug]);
 
   return <div ref={containerRef} className="h-full w-full" />;
+}
+
+export function GraphEditorPage() {
+  return <></>;
 }

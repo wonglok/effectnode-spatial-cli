@@ -1,403 +1,258 @@
-/*
-example input json:
+import { MaterialGraphJSON, SerializedNode } from "./types";
 
-{
-    "materialType": "MeshPhysicalNodeMaterial",
-    "rootNodeId": "b495a934-979a-4316-b9bc-f1bab6b14de7",
-    "materialSlots": {
-        "colorNode": "b495a934-979a-4316-b9bc-f1bab6b14de7"
-    },
-    "nodes": [
-        {
-            "id": "b495a934-979a-4316-b9bc-f1bab6b14de7",
-            "type": "VarNode",
-            "data": {
-                "inputNodes": {
-                    "node": "8baba18f-5f3d-40cb-aed3-a3fd2bd78082"
-                }
-            },
-            "customData": {
-                "updateType": "none",
-                "updateBeforeType": "none",
-                "updateAfterType": "none",
-                "version": 0,
-                "global": true,
-                "parents": true,
-                "isNode": true,
-                "isVarNode": true,
-                "readOnly": false,
-                "intent": true
-            }
-        },
-        {
-            "id": "8baba18f-5f3d-40cb-aed3-a3fd2bd78082",
-            "type": "JoinNode",
-            "data": {
-                "inputNodes": {
-                    "nodes": [
-                        "d228129c-923d-423b-aeb6-f136e6d044c4",
-                        "ef9f2295-1813-43a4-bbd4-86e731922bc5",
-                        "d32aa8b5-a490-4462-a56c-0d178db8ef83"
-                    ]
-                }
-            },
-            "customData": {
-                "nodeType": "vec3",
-                "updateType": "none",
-                "updateBeforeType": "none",
-                "updateAfterType": "none",
-                "version": 0,
-                "name": "",
-                "global": false,
-                "parents": false,
-                "isNode": true,
-                "isTempNode": true
-            }
-        },
-        {
-            "id": "d228129c-923d-423b-aeb6-f136e6d044c4",
-            "type": "VarNode",
-            "data": {
-                "inputNodes": {
-                    "node": "93e295ce-20b9-437b-9e81-d8621e9c8577"
-                }
-            },
-            "customData": {
-                "updateType": "none",
-                "updateBeforeType": "none",
-                "updateAfterType": "none",
-                "version": 0,
-                "global": true,
-                "parents": true,
-                "isNode": true,
-                "isVarNode": true,
-                "readOnly": false,
-                "intent": true
-            }
-        },
-        {
-            "id": "93e295ce-20b9-437b-9e81-d8621e9c8577",
-            "type": "OperatorNode",
-            "data": {
-                "inputNodes": {
-                    "aNode": "b2f44d86-500b-4cfb-9e28-a24df0a120cb",
-                    "bNode": "a4fbd93c-00eb-4ab3-ac19-394440d8aa10"
-                },
-                "op": "*"
-            },
-            "customData": {
-                "updateType": "none",
-                "updateBeforeType": "none",
-                "updateAfterType": "none",
-                "version": 0,
-                "name": "",
-                "global": false,
-                "parents": false,
-                "isNode": true,
-                "isTempNode": true,
-                "isOperatorNode": true,
-                "intent": true
-            }
-        },
-        {
-            "id": "b2f44d86-500b-4cfb-9e28-a24df0a120cb",
-            "type": "VarNode",
-            "data": {
-                "inputNodes": {
-                    "node": "20d0616c-0f81-4808-9ba2-cbabad0b362d"
-                }
-            },
-            "customData": {
-                "updateType": "none",
-                "updateBeforeType": "none",
-                "updateAfterType": "none",
-                "version": 0,
-                "global": true,
-                "parents": true,
-                "isNode": true,
-                "isVarNode": true,
-                "readOnly": false,
-                "intent": true
-            }
-        },
-        {
-            "id": "20d0616c-0f81-4808-9ba2-cbabad0b362d",
-            "type": "OperatorNode",
-            "data": {
-                "inputNodes": {
-                    "aNode": "27d1876f-6fb6-4709-bc83-da2db0d6136d",
-                    "bNode": "c9567ad0-24cb-4345-a89c-fa08b0643731"
-                },
-                "op": "+"
-            },
-            "customData": {
-                "updateType": "none",
-                "updateBeforeType": "none",
-                "updateAfterType": "none",
-                "version": 0,
-                "name": "",
-                "global": false,
-                "parents": false,
-                "isNode": true,
-                "isTempNode": true,
-                "isOperatorNode": true,
-                "intent": true
-            }
-        },
-        {
-            "id": "27d1876f-6fb6-4709-bc83-da2db0d6136d",
-            "type": "VarNode",
-            "data": {
-                "inputNodes": {
-                    "node": "69b02419-0f62-4103-86e7-5cc6da97e4c9"
-                }
-            },
-            "customData": {
-                "updateType": "none",
-                "updateBeforeType": "none",
-                "updateAfterType": "none",
-                "version": 0,
-                "global": true,
-                "parents": true,
-                "isNode": true,
-                "isVarNode": true,
-                "readOnly": false,
-                "intent": true
-            }
-        },
-        {
-            "id": "69b02419-0f62-4103-86e7-5cc6da97e4c9",
-            "type": "OperatorNode",
-            "data": {
-                "inputNodes": {
-                    "aNode": "5c12d3df-abde-4ee8-a053-e9f89c1a79a6",
-                    "bNode": "c9567ad0-24cb-4345-a89c-fa08b0643731"
-                },
-                "op": "*"
-            },
-            "customData": {
-                "updateType": "none",
-                "updateBeforeType": "none",
-                "updateAfterType": "none",
-                "version": 0,
-                "name": "",
-                "global": false,
-                "parents": false,
-                "isNode": true,
-                "isTempNode": true,
-                "isOperatorNode": true,
-                "intent": true
-            }
-        },
-        {
-            "id": "5c12d3df-abde-4ee8-a053-e9f89c1a79a6",
-            "type": "SplitNode",
-            "data": {
-                "inputNodes": {
-                    "node": "3d42a7ea-bc3d-4e92-831d-dd86eb644415"
-                },
-                "components": "y"
-            },
-            "customData": {
-                "updateType": "none",
-                "updateBeforeType": "none",
-                "updateAfterType": "none",
-                "version": 0,
-                "name": "",
-                "global": false,
-                "parents": false,
-                "isNode": true,
-                "isSplitNode": true
-            }
-        },
-        {
-            "id": "3d42a7ea-bc3d-4e92-831d-dd86eb644415",
-            "type": "AttributeNode",
-            "data": {
-                "global": true,
-                "_attributeName": "uv"
-            },
-            "customData": {
-                "nodeType": "vec2",
-                "updateType": "none",
-                "updateBeforeType": "none",
-                "updateAfterType": "none",
-                "version": 0,
-                "name": "",
-                "parents": false,
-                "isNode": true
-            }
-        },
-        {
-            "id": "c9567ad0-24cb-4345-a89c-fa08b0643731",
-            "type": "ConstNode",
-            "data": {
-                "value": 0.5,
-                "valueType": "float",
-                "nodeType": null,
-                "precision": null
-            },
-            "customData": {
-                "updateType": "none",
-                "updateBeforeType": "none",
-                "updateAfterType": "none",
-                "version": 0,
-                "name": "",
-                "global": false,
-                "parents": false,
-                "isNode": true,
-                "isInputNode": true,
-                "isConstNode": true
-            }
-        },
-        {
-            "id": "a4fbd93c-00eb-4ab3-ac19-394440d8aa10",
-            "type": "ConstNode",
-            "data": {
-                "value": 1.5,
-                "valueType": "float",
-                "nodeType": null,
-                "precision": null
-            },
-            "customData": {
-                "updateType": "none",
-                "updateBeforeType": "none",
-                "updateAfterType": "none",
-                "version": 0,
-                "name": "",
-                "global": false,
-                "parents": false,
-                "isNode": true,
-                "isInputNode": true,
-                "isConstNode": true
-            }
-        },
-        {
-            "id": "ef9f2295-1813-43a4-bbd4-86e731922bc5",
-            "type": "VarNode",
-            "data": {
-                "inputNodes": {
-                    "node": "edf2b573-95ac-4fc5-a167-cae8565992e8"
-                }
-            },
-            "customData": {
-                "updateType": "none",
-                "updateBeforeType": "none",
-                "updateAfterType": "none",
-                "version": 0,
-                "global": true,
-                "parents": true,
-                "isNode": true,
-                "isVarNode": true,
-                "readOnly": false,
-                "intent": true
-            }
-        },
-        {
-            "id": "edf2b573-95ac-4fc5-a167-cae8565992e8",
-            "type": "ConvertNode",
-            "data": {
-                "inputNodes": {
-                    "node": "202eaece-184d-4e1b-87cb-b33d22694e8e"
-                },
-                "convertTo": "float"
-            },
-            "customData": {
-                "updateType": "none",
-                "updateBeforeType": "none",
-                "updateAfterType": "none",
-                "version": 0,
-                "name": "",
-                "global": false,
-                "parents": false,
-                "isNode": true
-            }
-        },
-        {
-            "id": "202eaece-184d-4e1b-87cb-b33d22694e8e",
-            "type": "SplitNode",
-            "data": {
-                "inputNodes": {
-                    "node": "56fd6776-0afa-423b-9697-7f78f343b748"
-                },
-                "components": "x"
-            },
-            "customData": {
-                "updateType": "none",
-                "updateBeforeType": "none",
-                "updateAfterType": "none",
-                "version": 0,
-                "name": "",
-                "global": false,
-                "parents": false,
-                "isNode": true,
-                "isSplitNode": true
-            }
-        },
-        {
-            "id": "56fd6776-0afa-423b-9697-7f78f343b748",
-            "type": "AttributeNode",
-            "data": {
-                "global": true,
-                "_attributeName": "uv"
-            },
-            "customData": {
-                "nodeType": "vec2",
-                "updateType": "none",
-                "updateBeforeType": "none",
-                "updateAfterType": "none",
-                "version": 0,
-                "name": "",
-                "parents": false,
-                "isNode": true
-            }
-        },
-        {
-            "id": "d32aa8b5-a490-4462-a56c-0d178db8ef83",
-            "type": "VarNode",
-            "data": {
-                "inputNodes": {
-                    "node": "db17973a-c6d8-43fb-b3d9-8dcaf0848873"
-                }
-            },
-            "customData": {
-                "updateType": "none",
-                "updateBeforeType": "none",
-                "updateAfterType": "none",
-                "version": 0,
-                "global": true,
-                "parents": true,
-                "isNode": true,
-                "isVarNode": true,
-                "readOnly": false,
-                "intent": true
-            }
-        },
-        {
-            "id": "db17973a-c6d8-43fb-b3d9-8dcaf0848873",
-            "type": "ConstNode",
-            "data": {
-                "value": 0.3,
-                "valueType": "float",
-                "nodeType": "float",
-                "precision": null
-            },
-            "customData": {
-                "updateType": "none",
-                "updateBeforeType": "none",
-                "updateAfterType": "none",
-                "version": 0,
-                "name": "",
-                "global": false,
-                "parents": false,
-                "isNode": true,
-                "isInputNode": true,
-                "isConstNode": true
-            }
-        }
-    ],
-    "edges": []
+/**
+ * Generates TypeScript/TSL source code that reconstructs a material from a
+ * serialized node graph (the `MaterialGraphJSON` produced by
+ * `materialParser.parseNodeMaterialToJSON`).
+ *
+ * The output is a function body of the form:
+ *
+ *   return async function genFunction ({ THREE, TSL }) {
+ *     const mat = new THREE.MeshPhysicalNodeMaterial();
+ *     mat.colorNode = TSL.vec3(...);
+ *     return mat;
+ *   }
+ *
+ * which matches the format consumed by `code-and-json.ts` via `new Function`.
+ * Nodes are emitted as inline TSL expressions; a node shared by several parents
+ * is inlined again, which is semantically equivalent for TSL.
+ *
+ * Because the output is later `eval`ed, any value taken from the JSON and
+ * interpolated into the code is sanitized first (see the helpers below) so a
+ * malformed/persisted graph cannot inject code.
+ */
+
+// AttributeNode `_attributeName` -> TSL accessor expression. `uv` is a function
+// (hence the trailing `()`); the geometry accessors are pre-instantiated nodes.
+const ATTRIBUTE_MAP: Record<string, string> = {
+  position: "positionGeometry",
+  normal: "normalGeometry",
+  tangent: "tangentGeometry",
+  bitangent: "bitangentGeometry",
+  uv: "uv()",
+};
+
+// OperatorNode `op` -> TSL function name.
+const OPERATOR_MAP: Record<string, string> = {
+  "+": "add",
+  "-": "sub",
+  "*": "mul",
+  "/": "div",
+  "%": "mod",
+  "==": "equal",
+  "!=": "notEqual",
+  "<": "lessThan",
+  ">": "greaterThan",
+  "<=": "lessThanEqual",
+  ">=": "greaterThanEqual",
+  "&&": "and",
+  "||": "or",
+  "^^": "xor",
+  "!": "not",
+  "~": "bitNot",
+  "&": "bitAnd",
+  "|": "bitOr",
+  "^": "bitXor",
+  "<<": "shiftLeft",
+  ">>": "shiftRight",
+};
+
+// MathNode `method` values whose TSL export name differs from the method string.
+const MATH_METHOD_REMAP: Record<string, string> = {
+  inversesqrt: "inverseSqrt",
+};
+
+/** TSL functions that build a node of the given type (Join/Convert/Const). */
+const TYPE_FNS = new Set([
+  "float",
+  "int",
+  "uint",
+  "bool",
+  "color",
+  "vec2",
+  "vec3",
+  "vec4",
+  "ivec2",
+  "ivec3",
+  "ivec4",
+  "uvec2",
+  "uvec3",
+  "uvec4",
+  "bvec2",
+  "bvec3",
+  "bvec4",
+  "mat2",
+  "mat3",
+  "mat4",
+]);
+
+export function jsonToCode(json: MaterialGraphJSON): string {
+  const nodesById = new Map<string, SerializedNode>();
+  for (const node of json.nodes) {
+    nodesById.set(node.id, node);
+  }
+
+  const gen = (id: string): string => genNode(id, nodesById, new Set());
+
+  const materialClass = sanitizeIdentifier(
+    json.materialType,
+    "MeshPhysicalNodeMaterial",
+  );
+
+  const lines: string[] = [];
+  lines.push("return async function genFunction ({ THREE, TSL }) {");
+  lines.push("");
+  lines.push(`    const mat = new THREE.${materialClass}();`);
+  lines.push("");
+
+  for (const [slot, nodeId] of Object.entries(json.materialSlots)) {
+    // Slot names become `mat.<slot>` — reject anything that is not a valid
+    // identifier (e.g. a crafted key meant to break out of the assignment).
+    if (!nodesById.has(nodeId) || !IDENTIFIER_RE.test(slot)) continue;
+    lines.push(`    mat.${slot} = ${gen(nodeId)};`);
+  }
+
+  lines.push("");
+  lines.push("    return mat;");
+  lines.push("}");
+
+  return lines.join("\n");
 }
 
+function genNode(
+  id: string,
+  nodesById: Map<string, SerializedNode>,
+  visiting: Set<string>,
+): string {
+  const node = nodesById.get(id);
+  if (!node) return "TSL.float(0)";
+  if (visiting.has(id)) return "/* cycle */ TSL.float(0)";
 
-*/
+  visiting.add(id);
+  try {
+    const data = node.data || {};
+    const custom = node.customData || {};
+    const inputNodes = data.inputNodes || {};
+
+    const child = (key: string): string | null => {
+      const ref = inputNodes[key];
+      if (typeof ref !== "string" || ref === "") return null;
+      return genNode(ref, nodesById, visiting);
+    };
+    const childOrZero = (key: string): string => child(key) ?? "TSL.float(0)";
+
+    switch (node.type) {
+      case "VarNode": {
+        const inner = childOrZero("node");
+        // Intent vars (created by `nodeProxyIntent`) are transparent — emit the
+        // wrapped expression directly.
+        if (custom.intent === true) return inner;
+        const method = custom.readOnly ? "toConst" : "toVar";
+        const name =
+          typeof custom.name === "string" && custom.name !== ""
+            ? `('${sanitizeStringLiteral(custom.name)}')`
+            : "()";
+        return `${inner}.${method}${name}`;
+      }
+
+      case "AttributeNode": {
+        const attributeName = data._attributeName as string;
+        const accessor = ATTRIBUTE_MAP[attributeName];
+        if (accessor) return `TSL.${accessor}`;
+        // `uv1`, `uv2`, ... map to uv(index).
+        const uvMatch = /^uv(\d+)$/.exec(attributeName);
+        if (uvMatch) return `TSL.uv(${uvMatch[1]})`;
+        return `TSL.attribute('${sanitizeStringLiteral(attributeName)}')`;
+      }
+
+      case "VertexColorNode": {
+        return `TSL.vertexColor(${data.index ?? 0})`;
+      }
+
+      case "ConstNode": {
+        return genConst(data);
+      }
+
+      case "OperatorNode": {
+        const fn = OPERATOR_MAP[data.op] ?? "add";
+        const a = childOrZero("aNode");
+        const b = child("bNode");
+        return b === null ? `TSL.${fn}(${a})` : `TSL.${fn}(${a}, ${b})`;
+      }
+
+      case "SplitNode": {
+        // Swizzle components (e.g. "x", "xy", "rgb") become `.x` — restrict to
+        // a valid identifier so a crafted value cannot inject.
+        const components = sanitizeIdentifier(data.components, "x");
+        return `${childOrZero("node")}.${components}`;
+      }
+
+      case "JoinNode": {
+        const fn = tslTypeFn(custom.nodeType, "vec3");
+        const children = (inputNodes.nodes || [])
+          .filter((ref: unknown): ref is string => typeof ref === "string")
+          .map((ref: string) => genNode(ref, nodesById, visiting));
+        return `TSL.${fn}(${children.join(", ")})`;
+      }
+
+      case "ConvertNode": {
+        const fn = tslTypeFn(data.convertTo, "float");
+        return `TSL.${fn}(${childOrZero("node")})`;
+      }
+
+      case "MathNode": {
+        const method = sanitizeIdentifier(data.method, "sin");
+        const fn = MATH_METHOD_REMAP[method] ?? method;
+        const args = [childOrZero("aNode")];
+        if (inputNodes.bNode) args.push(childOrZero("bNode"));
+        if (inputNodes.cNode) args.push(childOrZero("cNode"));
+        return `TSL.${fn}(${args.join(", ")})`;
+      }
+
+      default: {
+        // Unknown node type — keep the generated code runnable while flagging it.
+        return `/* unsupported node: ${node.type} */ TSL.float(0)`;
+      }
+    }
+  } finally {
+    visiting.delete(id);
+  }
+}
+
+function genConst(data: Record<string, any>): string {
+  const value = data.value;
+  const valueType = data.valueType || "float";
+
+  if (valueType === "color") {
+    return `TSL.color(${formatValue(value)})`;
+  }
+
+  const fn = tslTypeFn(valueType, "float");
+  return `TSL.${fn}(${formatValue(value)})`;
+}
+
+/** Returns the value as a TSL-safe argument string (arrays become `a, b, c`). */
+function formatValue(value: unknown): string {
+  if (Array.isArray(value)) {
+    return value.map((item) => formatValue(item)).join(", ");
+  }
+  const encoded = JSON.stringify(value);
+  return encoded === undefined ? "0" : encoded;
+}
+
+/** Returns `type` if it maps to a TSL constructor, otherwise `fallback`. */
+function tslTypeFn(type: unknown, fallback: string): string {
+  return typeof type === "string" && TYPE_FNS.has(type) ? type : fallback;
+}
+
+const IDENTIFIER_RE = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+
+function sanitizeIdentifier(value: unknown, fallback: string): string {
+  return typeof value === "string" && IDENTIFIER_RE.test(value)
+    ? value
+    : fallback;
+}
+
+function sanitizeStringLiteral(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
