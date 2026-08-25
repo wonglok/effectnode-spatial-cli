@@ -80,8 +80,8 @@ import * as THREE from 'three/webgpu'
 import * as TSL from 'three/tsl'
 
 import { vec3 } from 'three/tsl';
-import { vec3 } from 'three/tsl';
-import { vec3 } from 'three/tsl';
+import { uv } from 'three/tsl';
+import { float } from 'three/tsl';
 
 return async function materialFunction () {
 
