@@ -23,7 +23,13 @@ export const WebGPUCanvas = ({ children }: { children?: ReactNode }) => {
           },
         });
         await renderer.init();
-        setOK(true);
+
+        let ttt = setInterval(() => {
+          if (renderer.initialized) {
+            clearInterval(ttt);
+            setOK(true);
+          }
+        }, 0);
 
         return renderer;
       }}

@@ -77,15 +77,16 @@ function GraphEditorUnit({}: {}) {
   const [tslCode, setCode] = useState(
     `
 
-return async function materialFunction ({ THREE, TSL }) {
 
-    const mat = new THREE.MeshPhysicalNodeMaterial({
+return async function materialFunction ({ THREE, TSL }) {
+    
+    const material = new THREE.MeshPhysicalNodeMaterial({
       name: 'loklok'
     })
 
-    mat.colorNode = TSL.vec3(TSL.uv().y.mul(0.5).add(0.5), TSL.float(0.0), TSL.float(0.3));
+    material.colorNode = TSL.vec3(TSL.uv().y.mul(0.5).add(0.5), TSL.float(TSL.uv().x), TSL.float(0.3));
 
-    return mat
+    return material;
 }
 
 
@@ -108,6 +109,35 @@ return async function materialFunction ({ THREE, TSL }) {
     };
   }, [materialSlug]);
 
+  return (
+    <>
+      {/*  */}
+      {/*  */}
+      {/*  */}
+      <div className="w-full h-full">
+        <Editor
+          height="50%"
+          language="typescript"
+          theme="vs-dark"
+          value={tslCode}
+          onChange={(value) => setCode(value ?? "")}
+          onMount={handleMount}
+          options={EDITOR_OPTIONS}
+        />
+        <div className="w-full h-1/2">
+          {
+            <WebGPUCanvas>
+              <Ball tslCode={tslCode}></Ball>
+              <Environment files={[`/hdr/venice_sunset_1k.hdr`]}></Environment>
+            </WebGPUCanvas>
+          }
+        </div>
+      </div>
+    </>
+  );
+}
+
+function Ball({ tslCode = "" }: { tslCode: string }) {
   const { translateAsync } = useTranslationService();
 
   const [material, setMaterial] = useState<any>(null);
@@ -125,11 +155,11 @@ return async function materialFunction ({ THREE, TSL }) {
 
         setTimeout(() => {
           setMaterial(
-            <Suspense fallback={null}>
+            <>
               <mesh material={restoredMaterial}>
                 <sphereGeometry></sphereGeometry>
               </mesh>
-            </Suspense>,
+            </>,
           );
         });
       })
@@ -142,33 +172,5 @@ return async function materialFunction ({ THREE, TSL }) {
     };
   }, [translateAsync, tslCode]);
 
-  return (
-    <>
-      {/*  */}
-      {/*  */}
-      {/*  */}
-      <div className="w-full h-full">
-        <Editor
-          height="50%"
-          language="typescript"
-          theme="vs-dark"
-          value={tslCode}
-          onChange={(value) => setCode(value ?? "")}
-          onMount={handleMount}
-          options={EDITOR_OPTIONS}
-        />
-        <div className="w-full h-1/2">
-          <WebGPUCanvas key={material?.uuid}>
-            {/*  */}
-
-            {material}
-
-            <Suspense fallback={null}>
-              <Environment preset="city"></Environment>
-            </Suspense>
-          </WebGPUCanvas>
-        </div>
-      </div>
-    </>
-  );
+  return <group>{material}</group>;
 }
