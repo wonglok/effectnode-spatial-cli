@@ -19,10 +19,8 @@ import { MaterialGraphJSON, SerializedNode } from "./types";
  *     return mat;
  *   }
  *
- * Node types with a known idiomatic TSL expression (see `MAPPED_TYPES`) are
- * emitted as readable TSL. Every other node type is reconstructed faithfully
- * via a small embedded hydrator (`__node(id)`) that uses the node's own
- * `deserialize()`, so the full TSL node vocabulary round-trips even when there
+ * Node types with a known idiomatic TSL expression are emitted as readable TSL.
+ * Any other node type falls back to a placeholder (`TSL.float(0)`) since there
  * is no clean one-liner for it.
  *
  * Because the output is later `eval`ed, any value taken from the JSON and
@@ -94,34 +92,11 @@ const TYPE_FNS = new Set([
   "mat4",
 ]);
 
-/** Node types that have an idiomatic codegen handler in the switch below. */
-const MAPPED_TYPES = new Set([
-  "VarNode",
-  "AttributeNode",
-  "VertexColorNode",
-  "ConstNode",
-  "OperatorNode",
-  "SplitNode",
-  "JoinNode",
-  "ConvertNode",
-  "MathNode",
-  "ConditionalNode",
-  "VaryingNode",
-  "MemberNode",
-  "ArrayElementNode",
-  "FrontFacingNode",
-  "IndexNode",
-]);
-
 function generateCode(json: MaterialGraphJSON): string {
   const nodesById = new Map<string, SerializedNode>();
   for (const node of json.nodes) {
     nodesById.set(node.id, node);
   }
-
-  // Only embed the generic hydrator when at least one node has no idiomatic
-  // handler, so the common case stays a readable pure-TSL module.
-  const needsHydrator = json.nodes.some((n) => !MAPPED_TYPES.has(n.type));
 
   const gen = (id: string): string => genNode(id, nodesById, new Set());
 
@@ -134,11 +109,6 @@ function generateCode(json: MaterialGraphJSON): string {
   lines.push("import * as THREE from 'three/webgpu'");
   lines.push("import * as TSL from 'three/tsl'");
   lines.push("");
-
-  if (needsHydrator) {
-    lines.push(...emitHydrator(json.nodes));
-    lines.push("");
-  }
 
   lines.push("return async function materialFunction () {");
   lines.push("");
@@ -171,45 +141,6 @@ export async function jsonToCode(json: MaterialGraphJSON): Promise<string> {
     console.warn("Prettier failed to format generated code:", e);
     return code;
   }
-}
-
-/**
- * Emits a module-level helper that reconstructs any node by id. It rebuilds the
- * whole graph via the runtime registry + each node's `deserialize()` — the same
- * logic as `materialParser.hydrateJSONToNodeMaterial`, inlined into the output.
- */
-function emitHydrator(nodes: SerializedNode[]): string[] {
-  const nodesJson = JSON.stringify(nodes);
-  return [
-    "// Generic reconstruction for node types without an idiomatic TSL mapping.",
-    `const __nodes = ${nodesJson};`,
-    "const __registry = (() => {",
-    "  const r = {};",
-    "  for (const [k, v] of Object.entries(THREE)) {",
-    '    if (typeof v === "function" && v.prototype && v.prototype instanceof THREE.Node) {',
-    "      const t = v.type;",
-    "      if (t && r[t] === undefined) r[t] = v;",
-    "    }",
-    "  }",
-    "  return r;",
-    "})();",
-    "const __instances = {};",
-    "for (const n of __nodes) {",
-    "  const Ctor = __registry[n.type];",
-    "  if (!Ctor) continue;",
-    "  const inst = new Ctor();",
-    "  inst._uuid = n.id;",
-    "  __instances[n.id] = inst;",
-    "}",
-    "const __meta = { nodes: __instances, textures: {} };",
-    "for (const n of __nodes) {",
-    "  const inst = __instances[n.id];",
-    "  if (!inst) continue;",
-    "  inst.deserialize({ ...n.data, meta: __meta });",
-    "  Object.assign(inst, n.customData);",
-    "}",
-    "const __node = (id) => __instances[id] ?? TSL.float(0);",
-  ];
 }
 
 function genNode(
@@ -347,9 +278,9 @@ function genNode(
       }
 
       default: {
-        // No idiomatic mapping — reconstruct generically via the embedded
-        // hydrator so the node is faithfully restored.
-        return `__node('${sanitizeStringLiteral(id)}')`;
+        // No idiomatic mapping — emit a neutral placeholder and flag it.
+        const type = sanitizeIdentifier(node.type, "unknown");
+        return `/* unsupported node: ${type} */ TSL.float(0)`;
       }
     }
   } finally {
