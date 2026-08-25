@@ -150,7 +150,6 @@ function GraphUISection({ tslCode = "" }) {
     }
 
     translateAsync(`${tslCode}`)?.then((result: any) => {
-      console.log(result.jsonGraph);
       setJSON(result.jsonGraph);
     });
   }, [tslCode]);

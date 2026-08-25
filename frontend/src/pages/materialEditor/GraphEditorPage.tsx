@@ -538,14 +538,15 @@ return async function materialFunction () {
 export function GraphEditorPage() {
   let [tslCode, setTSLCode] = useState(defaultCode);
 
-  let [json, setJSON] = useState(defaultData);
+  let [json, setJSON] = useState(null);
   const { translateAsync } = useTranslationService();
 
   useEffect(() => {
-    translateAsync(`${tslCode}`)?.then((myJson: any) => {
-      console.log(myJson);
-
-      setJSON(myJson);
+    if (!tslCode) {
+      return;
+    }
+    translateAsync(`${tslCode}`)?.then((result: any) => {
+      setJSON(result.jsonGraph);
     });
   }, [tslCode]);
 
