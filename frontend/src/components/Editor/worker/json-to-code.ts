@@ -137,7 +137,7 @@ export function jsonToCode(json: MaterialGraphJSON): string {
     lines.push("");
   }
 
-  lines.push("export async function materialFunction () {");
+  lines.push("return async function materialFunction () {");
   lines.push("");
   lines.push(`    const mat = new THREE.${materialClass}();`);
   lines.push("");
@@ -169,7 +169,7 @@ function emitHydrator(nodes: SerializedNode[]): string[] {
     "const __registry = (() => {",
     "  const r = {};",
     "  for (const [k, v] of Object.entries(THREE)) {",
-    "    if (typeof v === \"function\" && v.prototype && v.prototype instanceof THREE.Node) {",
+    '    if (typeof v === "function" && v.prototype && v.prototype instanceof THREE.Node) {',
     "      const t = v.type;",
     "      if (t && r[t] === undefined) r[t] = v;",
     "    }",
@@ -324,7 +324,9 @@ function genNode(
       }
 
       case "IndexNode": {
-        return custom.scope === "vertex" ? "TSL.vertexIndex" : "TSL.instanceIndex";
+        return custom.scope === "vertex"
+          ? "TSL.vertexIndex"
+          : "TSL.instanceIndex";
       }
 
       default: {

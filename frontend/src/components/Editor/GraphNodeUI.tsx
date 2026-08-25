@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useMemo } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+} from "react";
 import dagre from "@dagrejs/dagre";
 import {
   ReactFlow,
@@ -6,7 +12,6 @@ import {
   Controls,
   Handle,
   Position,
-  useReactFlow,
   useNodesState,
   useEdgesState,
   type Node,
@@ -25,8 +30,9 @@ import { MaterialGraphJSON, SerializedNode } from "./worker/types";
 // `data.inputNodes` (the `edges` field is vestigial in the current format).
 //
 // Nodes are draggable and select values (attribute name, numeric constant,
-// operator) are editable in place; edits are applied to the local graph and
-// emitted through `onNodeEdit` so the caller can persist them.
+// operator) are editable in place. Every edit mutates the local
+// `MaterialGraphJSON` and re-emits the whole graph via
+// `onMaterialGraphJSONChange`.
 // ---------------------------------------------------------------------------
 
 type Socket = {
@@ -87,7 +93,11 @@ const OPERATOR_OPTIONS = [
   "!",
 ];
 
-/** In-place edit callback: `patch` maps serialized `data` fields to new values. */
+/**
+ * In-place edit handler. `patch` holds serialized `data` fields (e.g.
+ * `{ _attributeName: "position" }`, `{ value: 2.5 }`, `{ op: "+" }`) merged
+ * onto the edited node's `data`.
+ */
 const NodeEditContext = createContext<
   ((id: string, patch: Record<string, unknown>) => void) | undefined
 >(undefined);
@@ -367,17 +377,22 @@ function socketTop(index: number, count: number): string {
   return `${((index + 1) / (count + 1)) * 100}%`;
 }
 
-function useEdit() {
-  const { updateNodeData } = useReactFlow();
-  const onNodeEdit = useContext(NodeEditContext);
-  return (id: string, patch: Record<string, unknown>) => {
-    updateNodeData(id, patch);
-    onNodeEdit?.(id, patch);
+/** Returns a new graph with `patch` merged into node `id`'s serialized `data`. */
+function applyEdit(
+  json: MaterialGraphJSON,
+  id: string,
+  patch: Record<string, unknown>,
+): MaterialGraphJSON {
+  return {
+    ...json,
+    nodes: json.nodes.map((n) =>
+      n.id === id ? { ...n, data: { ...n.data, ...patch } } : n,
+    ),
   };
 }
 
 function AttributeSelect({ id, value }: { id: string; value: string }) {
-  const edit = useEdit();
+  const edit = useContext(NodeEditContext);
   const options = ATTRIBUTE_OPTIONS.includes(value)
     ? ATTRIBUTE_OPTIONS
     : [value, ...ATTRIBUTE_OPTIONS];
@@ -385,10 +400,7 @@ function AttributeSelect({ id, value }: { id: string; value: string }) {
   return (
     <select
       value={value}
-      onChange={(e) => {
-        const next = e.target.value;
-        edit(id, { attributeName: next, sublabel: next });
-      }}
+      onChange={(e) => edit?.(id, { _attributeName: e.target.value })}
       className="nodrag mt-0.5 w-full rounded border border-slate-600 bg-slate-700 px-1 py-0.5 font-mono text-[10px] text-slate-200 outline-none"
     >
       {options.map((o) => (
@@ -400,16 +412,8 @@ function AttributeSelect({ id, value }: { id: string; value: string }) {
   );
 }
 
-function ConstInput({
-  id,
-  value,
-  valueType,
-}: {
-  id: string;
-  value: number;
-  valueType?: string;
-}) {
-  const edit = useEdit();
+function ConstInput({ id, value }: { id: string; value: number }) {
+  const edit = useContext(NodeEditContext);
   return (
     <input
       type="number"
@@ -418,10 +422,7 @@ function ConstInput({
       onChange={(e) => {
         const next = e.target.valueAsNumber;
         if (Number.isNaN(next)) return;
-        edit(id, {
-          constValue: next,
-          sublabel: `${valueType ?? "float"} ${next}`,
-        });
+        edit?.(id, { value: next });
       }}
       className="nodrag mt-0.5 w-full rounded border border-slate-600 bg-slate-700 px-1 py-0.5 font-mono text-[10px] text-slate-200 outline-none"
     />
@@ -429,7 +430,7 @@ function ConstInput({
 }
 
 function OperatorSelect({ id, value }: { id: string; value: string }) {
-  const edit = useEdit();
+  const edit = useContext(NodeEditContext);
   const options = OPERATOR_OPTIONS.includes(value)
     ? OPERATOR_OPTIONS
     : [value, ...OPERATOR_OPTIONS];
@@ -437,10 +438,7 @@ function OperatorSelect({ id, value }: { id: string; value: string }) {
   return (
     <select
       value={value}
-      onChange={(e) => {
-        const next = e.target.value;
-        edit(id, { op: next, label: next });
-      }}
+      onChange={(e) => edit?.(id, { op: e.target.value })}
       className="nodrag mt-0.5 w-full rounded border border-slate-600 bg-slate-700 px-1 py-0.5 font-mono text-[10px] text-slate-200 outline-none"
     >
       {options.map((o) => (
@@ -489,7 +487,7 @@ function TSLNodeView({ id, data }: NodeProps) {
         {d.attributeName !== undefined ? (
           <AttributeSelect id={id} value={d.attributeName} />
         ) : d.constValue !== undefined ? (
-          <ConstInput id={id} value={d.constValue} valueType={d.valueType} />
+          <ConstInput id={id} value={d.constValue} />
         ) : d.op !== undefined ? (
           <OperatorSelect id={id} value={d.op} />
         ) : d.sublabel ? (
@@ -566,26 +564,50 @@ const defaultEdgeOptions = {
 
 export function GraphNodeUI({
   json,
-  onNodeEdit,
+  onMaterialGraphJSONChange,
 }: {
   json: MaterialGraphJSON;
-  onNodeEdit?: (id: string, patch: Record<string, unknown>) => void;
+  onMaterialGraphJSONChange?: (json: MaterialGraphJSON) => void;
 }) {
-  const { nodes, edges } = useMemo(() => graphToFlow(json), [json]);
-  const [rfNodes, setRfNodes, onNodesChange] = useNodesState(nodes);
-  const [rfEdges, setRfEdges, onEdgesChange] = useEdgesState(edges);
+  const jsonRef = useRef<MaterialGraphJSON>(json);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
+  // (Re)build + layout the graph whenever the incoming `json` changes.
   useEffect(() => {
-    setRfNodes(nodes);
-    setRfEdges(edges);
-  }, [nodes, edges, setRfNodes, setRfEdges]);
+    jsonRef.current = json;
+    const flow = graphToFlow(json);
+    setNodes(flow.nodes);
+    setEdges(flow.edges);
+  }, [json, setNodes, setEdges]);
+
+  const handleEdit = useCallback(
+    (id: string, patch: Record<string, unknown>) => {
+      const next = applyEdit(jsonRef.current, id, patch);
+      jsonRef.current = next;
+      onMaterialGraphJSONChange?.(next);
+
+      // Update just this node's visual data (no re-layout, keeps drag positions).
+      const edited = next.nodes.find((n) => n.id === id);
+      if (!edited) return;
+      const visual = {
+        ...describeNode(edited),
+        inputs: computeInputSockets(edited),
+        outputs: [{ id: "out", label: "" }],
+      };
+      setNodes((ns) =>
+        ns.map((n) => (n.id === id ? { ...n, data: visual } : n)),
+      );
+    },
+    [onMaterialGraphJSONChange, setNodes],
+  );
 
   return (
-    <NodeEditContext.Provider value={onNodeEdit}>
+    <NodeEditContext.Provider value={handleEdit}>
       <div className="h-full w-full bg-slate-950">
         <ReactFlow
-          nodes={rfNodes}
-          edges={rfEdges}
+          nodes={nodes}
+          edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           nodeTypes={nodeTypes}

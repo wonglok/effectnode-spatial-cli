@@ -12,6 +12,8 @@ import { WebGPUCanvas } from "../../sdk/ui/WebGPUCanvas";
 import { GraphNodeUI } from "./GraphNodeUI";
 import { MaterialPreviewGarphMesh } from "./MaterialPreviewMesh";
 import { Environment, OrbitControls } from "@react-three/drei";
+import { MaterialGraphJSON } from "./worker/types";
+import { jsonToCode } from "./worker/json-to-code";
 
 // ---------------------------------------------------------------------------
 // Serve Monaco's web workers from locally-bundled files (via Vite's ?worker)
@@ -119,7 +121,15 @@ return async function materialFunction () {
         />
         <div className="w-full h-1/3">
           <div className="w-full h-full">
-            {tslCode && <GraphUISection tslCode={tslCode}></GraphUISection>}
+            {tslCode && (
+              <GraphUISection
+                tslCode={tslCode}
+                onCodeChange={(newCode) => {
+                  //
+                  setCode(newCode ?? "");
+                }}
+              ></GraphUISection>
+            )}
           </div>
         </div>
         <div className="w-full h-1/3">
@@ -140,7 +150,7 @@ return async function materialFunction () {
   );
 }
 
-function GraphUISection({ tslCode = "" }) {
+function GraphUISection({ tslCode = "", onCodeChange = (v: any) => {} }) {
   const { translateAsync, ready } = useTranslationService();
   const [json, setJSON] = useState<any>(null);
   useEffect(() => {
@@ -164,6 +174,10 @@ function GraphUISection({ tslCode = "" }) {
           key={JSON.stringify(json)}
           json={json}
           //
+          onMaterialGraphJSONChange={(json: MaterialGraphJSON) => {
+            let code = jsonToCode(json);
+            onCodeChange(code);
+          }}
         ></GraphNodeUI>
       )}
     </div>
