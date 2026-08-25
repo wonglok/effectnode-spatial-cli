@@ -30,6 +30,8 @@ interface MaterialEditorState {
     materialSlug: string,
     backupId: string,
   ) => Promise<void>;
+  /** Snapshots the current material as a new backup. */
+  createBackup: (projectSlug: string, materialSlug: string) => Promise<void>;
   setTslCode: (code: string) => void;
   setJson: (json: MaterialGraphJSON | null) => void;
 }
@@ -76,6 +78,13 @@ export const useMaterialEditorStore = create<MaterialEditorState>()(
           backupId,
         )}/restore`,
       );
+    },
+
+    createBackup: async (projectSlug, materialSlug) => {
+      const backup = await api.post<MaterialBackup>(
+        backupsPath(projectSlug, materialSlug),
+      );
+      set((state) => ({ backups: [backup, ...state.backups] }));
     },
 
     load: async (projectSlug, materialSlug) => {

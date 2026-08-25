@@ -260,3 +260,19 @@ export async function restoreMaterialBackup(
     await writeMetadata(id, { ...meta, updatedAt: new Date().toISOString() });
   }
 }
+
+export async function createMaterialBackup(
+  projectSlug: string,
+  materialSlug: string,
+): Promise<MaterialBackup> {
+  assertMaterialSlug(materialSlug);
+  const id = await resolveProjectId(projectSlug);
+  const current = await readJson<MaterialGraph | null>(
+    graphRel(id, materialSlug),
+    null,
+  );
+  if (!current) throw new Error("Material not found");
+  const backupId = Date.now().toString();
+  await writeJson(backupsRel(id, materialSlug, backupId), current);
+  return { id: backupId, createdAt: new Date(Number(backupId)).toISOString() };
+}

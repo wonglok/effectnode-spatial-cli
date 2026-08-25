@@ -13,10 +13,24 @@ export function BackupsPage() {
   const backups = useMaterialEditorStore((s) => s.backups);
   const fetchBackups = useMaterialEditorStore((s) => s.fetchBackups);
   const restoreBackup = useMaterialEditorStore((s) => s.restoreBackup);
+  const createBackup = useMaterialEditorStore((s) => s.createBackup);
   const load = useMaterialEditorStore((s) => s.load);
 
   const [selected, setSelected] = useState<string>("");
   const [restoring, setRestoring] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  const create = async () => {
+    if (!projectID || !materialSlug) return;
+    setCreating(true);
+    try {
+      await createBackup(projectID, materialSlug);
+    } catch {
+      // Failed; leave the list as-is.
+    } finally {
+      setCreating(false);
+    }
+  };
 
   useEffect(() => {
     if (projectID && materialSlug) {
@@ -40,11 +54,21 @@ export function BackupsPage() {
 
   return (
     <div className="mx-auto max-w-4xl p-6">
-      <header>
-        <h1 className="text-xl font-semibold text-ink-900">Backups</h1>
-        <p className="mt-0.5 text-sm text-ink-600">
-          Restore this material to a previously saved version.
-        </p>
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-ink-900">Backups</h1>
+          <p className="mt-0.5 text-sm text-ink-600">
+            Restore this material to a previously saved version.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={create}
+          disabled={creating}
+          className="btn-primary inline-flex shrink-0 items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {creating ? "Creating…" : "Add backup"}
+        </button>
       </header>
 
       {backups.length === 0 ? (

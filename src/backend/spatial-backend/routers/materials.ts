@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createMaterial,
+  createMaterialBackup,
   deleteMaterial,
   listMaterials,
   listMaterialBackups,
@@ -107,6 +108,20 @@ materialsRouter.get(
     try {
       res.json(
         await listMaterialBackups(req.params.projectID, req.params.materialSlug),
+      );
+    } catch (err) {
+      res.status(404).json({ error: (err as Error).message });
+    }
+  },
+);
+
+// POST /api/projects/:projectID/materials/:materialSlug/backups — snapshot.
+materialsRouter.post(
+  "/:projectID/materials/:materialSlug/backups",
+  async (req, res) => {
+    try {
+      res.status(201).json(
+        await createMaterialBackup(req.params.projectID, req.params.materialSlug),
       );
     } catch (err) {
       res.status(404).json({ error: (err as Error).message });
