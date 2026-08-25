@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo } from "react";
+import { createContext, useContext, useEffect, useMemo } from "react";
 import dagre from "@dagrejs/dagre";
 import {
   ReactFlow,
@@ -7,6 +7,8 @@ import {
   Handle,
   Position,
   useReactFlow,
+  useNodesState,
+  useEdgesState,
   type Node,
   type Edge,
   type NodeProps,
@@ -22,9 +24,9 @@ import { MaterialGraphJSON, SerializedNode } from "./worker/types";
 // editable, pannable/zoomable nodes. Child links come from each node's
 // `data.inputNodes` (the `edges` field is vestigial in the current format).
 //
-// Each node renders one socket per input (e.g. `aNode`/`bNode` for operators,
-// `nodes[0..n]` for joins) and a single output socket, so nodes with any number
-// of inputs/outputs are supported.
+// Nodes are draggable and select values (attribute name, numeric constant,
+// operator) are editable in place; edits are applied to the local graph and
+// emitted through `onNodeEdit` so the caller can persist them.
 // ---------------------------------------------------------------------------
 
 type Socket = {
@@ -37,6 +39,9 @@ type TSLNodeData = {
   sublabel?: string;
   kind?: string;
   attributeName?: string;
+  constValue?: number;
+  valueType?: string;
+  op?: string;
   inputs: Socket[];
   outputs: Socket[];
 };
@@ -53,7 +58,6 @@ const KIND_STYLES: Record<string, string> = {
   var: "border-slate-500/60",
 };
 
-// Attributes offered by the dropdown on `AttributeNode` nodes.
 const ATTRIBUTE_OPTIONS = [
   "position",
   "normal",
@@ -66,8 +70,26 @@ const ATTRIBUTE_OPTIONS = [
   "instanceMatrix",
 ];
 
-const AttributeChangeContext = createContext<
-  ((id: string, attributeName: string) => void) | undefined
+const OPERATOR_OPTIONS = [
+  "+",
+  "-",
+  "*",
+  "/",
+  "%",
+  "==",
+  "!=",
+  "<",
+  ">",
+  "<=",
+  ">=",
+  "&&",
+  "||",
+  "!",
+];
+
+/** In-place edit callback: `patch` maps serialized `data` fields to new values. */
+const NodeEditContext = createContext<
+  ((id: string, patch: Record<string, unknown>) => void) | undefined
 >(undefined);
 
 function fmt(value: unknown): string {
@@ -84,12 +106,17 @@ function describeNode(
   const custom = node.customData ?? {};
 
   switch (node.type) {
-    case "ConstNode":
+    case "ConstNode": {
+      const valueType = data.valueType ?? "float";
+      const numeric = typeof data.value === "number" ? data.value : undefined;
       return {
         kind: "const",
         label: "const",
-        sublabel: `${data.valueType ?? "float"} ${fmt(data.value)}`,
+        sublabel: `${valueType} ${fmt(data.value)}`,
+        constValue: numeric,
+        valueType,
       };
+    }
     case "AttributeNode":
       return {
         kind: "attribute",
@@ -102,6 +129,7 @@ function describeNode(
         kind: "operator",
         label: String(data.op ?? ""),
         sublabel: "operator",
+        op: String(data.op ?? ""),
       };
     case "SplitNode":
       return {
@@ -339,9 +367,17 @@ function socketTop(index: number, count: number): string {
   return `${((index + 1) / (count + 1)) * 100}%`;
 }
 
-function AttributeSelect({ id, value }: { id: string; value: string }) {
+function useEdit() {
   const { updateNodeData } = useReactFlow();
-  const onAttributeChange = useContext(AttributeChangeContext);
+  const onNodeEdit = useContext(NodeEditContext);
+  return (id: string, patch: Record<string, unknown>) => {
+    updateNodeData(id, patch);
+    onNodeEdit?.(id, patch);
+  };
+}
+
+function AttributeSelect({ id, value }: { id: string; value: string }) {
+  const edit = useEdit();
   const options = ATTRIBUTE_OPTIONS.includes(value)
     ? ATTRIBUTE_OPTIONS
     : [value, ...ATTRIBUTE_OPTIONS];
@@ -351,8 +387,59 @@ function AttributeSelect({ id, value }: { id: string; value: string }) {
       value={value}
       onChange={(e) => {
         const next = e.target.value;
-        updateNodeData(id, { attributeName: next, sublabel: next });
-        onAttributeChange?.(id, next);
+        edit(id, { attributeName: next, sublabel: next });
+      }}
+      className="nodrag mt-0.5 w-full rounded border border-slate-600 bg-slate-700 px-1 py-0.5 font-mono text-[10px] text-slate-200 outline-none"
+    >
+      {options.map((o) => (
+        <option key={o} value={o}>
+          {o}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function ConstInput({
+  id,
+  value,
+  valueType,
+}: {
+  id: string;
+  value: number;
+  valueType?: string;
+}) {
+  const edit = useEdit();
+  return (
+    <input
+      type="number"
+      step="any"
+      value={value}
+      onChange={(e) => {
+        const next = e.target.valueAsNumber;
+        if (Number.isNaN(next)) return;
+        edit(id, {
+          constValue: next,
+          sublabel: `${valueType ?? "float"} ${next}`,
+        });
+      }}
+      className="nodrag mt-0.5 w-full rounded border border-slate-600 bg-slate-700 px-1 py-0.5 font-mono text-[10px] text-slate-200 outline-none"
+    />
+  );
+}
+
+function OperatorSelect({ id, value }: { id: string; value: string }) {
+  const edit = useEdit();
+  const options = OPERATOR_OPTIONS.includes(value)
+    ? OPERATOR_OPTIONS
+    : [value, ...OPERATOR_OPTIONS];
+
+  return (
+    <select
+      value={value}
+      onChange={(e) => {
+        const next = e.target.value;
+        edit(id, { op: next, label: next });
       }}
       className="nodrag mt-0.5 w-full rounded border border-slate-600 bg-slate-700 px-1 py-0.5 font-mono text-[10px] text-slate-200 outline-none"
     >
@@ -401,6 +488,10 @@ function TSLNodeView({ id, data }: NodeProps) {
         </div>
         {d.attributeName !== undefined ? (
           <AttributeSelect id={id} value={d.attributeName} />
+        ) : d.constValue !== undefined ? (
+          <ConstInput id={id} value={d.constValue} valueType={d.valueType} />
+        ) : d.op !== undefined ? (
+          <OperatorSelect id={id} value={d.op} />
         ) : d.sublabel ? (
           <div className="mx-auto max-w-[130px] truncate font-mono text-[10px] text-slate-400">
             {d.sublabel}
@@ -475,19 +566,28 @@ const defaultEdgeOptions = {
 
 export function GraphNodeUI({
   json,
-  onAttributeChange,
+  onNodeEdit,
 }: {
   json: MaterialGraphJSON;
-  onAttributeChange?: (id: string, attributeName: string) => void;
+  onNodeEdit?: (id: string, patch: Record<string, unknown>) => void;
 }) {
   const { nodes, edges } = useMemo(() => graphToFlow(json), [json]);
+  const [rfNodes, setRfNodes, onNodesChange] = useNodesState(nodes);
+  const [rfEdges, setRfEdges, onEdgesChange] = useEdgesState(edges);
+
+  useEffect(() => {
+    setRfNodes(nodes);
+    setRfEdges(edges);
+  }, [nodes, edges, setRfNodes, setRfEdges]);
 
   return (
-    <AttributeChangeContext.Provider value={onAttributeChange}>
+    <NodeEditContext.Provider value={onNodeEdit}>
       <div className="h-full w-full bg-slate-950">
         <ReactFlow
-          nodes={nodes}
-          edges={edges}
+          nodes={rfNodes}
+          edges={rfEdges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
           nodeTypes={nodeTypes}
           defaultEdgeOptions={defaultEdgeOptions}
           fitView
@@ -498,6 +598,6 @@ export function GraphNodeUI({
           <Controls className="bg-slate-900! text-slate-200!" />
         </ReactFlow>
       </div>
-    </AttributeChangeContext.Provider>
+    </NodeEditContext.Provider>
   );
 }
