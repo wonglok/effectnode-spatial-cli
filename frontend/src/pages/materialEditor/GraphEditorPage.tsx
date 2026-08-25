@@ -542,7 +542,10 @@ export function GraphEditorPage() {
   const { translateAsync, ready } = useTranslationService();
 
   useEffect(() => {
-    translateAsync(`${defaultCode}`)?.then((result: any) => {
+    let codeFromBackend = defaultCode;
+    //please use backend storage here
+
+    translateAsync(`${codeFromBackend}`)?.then((result: any) => {
       setJSON(result.jsonGraph);
     });
   }, [ready]);
@@ -553,7 +556,6 @@ export function GraphEditorPage() {
         <div className="w-full h-1/2">
           {json && (
             <GraphNodeUI
-              key={JSON.stringify(json)}
               json={json}
               onMaterialGraphJSONChange={(json) => {
                 setJSON(json as any);

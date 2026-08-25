@@ -117,7 +117,7 @@ return async function materialFunction() {
       {/*  */}
       <div className="w-full h-full">
         <Editor
-          height="33%"
+          height="50%"
           language="typescript"
           theme="vs-dark"
           value={tslCode}
@@ -125,7 +125,7 @@ return async function materialFunction() {
           onMount={handleMount}
           options={EDITOR_OPTIONS}
         />
-        <div className="w-full h-1/3">
+        {/* <div className="w-full h-1/3">
           <div className="w-full h-full">
             {tslCode && (
               <GraphUISection
@@ -137,8 +137,8 @@ return async function materialFunction() {
               ></GraphUISection>
             )}
           </div>
-        </div>
-        <div className="w-full h-1/3">
+        </div> */}
+        <div className="w-full h-1/2">
           {
             <WebGPUCanvas>
               {json && (
@@ -156,35 +156,36 @@ return async function materialFunction() {
   );
 }
 
-function GraphUISection({ tslCode = "", onCodeChange = (v: any) => {} }) {
-  const { translateAsync, ready } = useTranslationService();
-  const [json, setJSON] = useState<any>(null);
-  useEffect(() => {
-    if (!tslCode) {
-      return;
-    }
+// function GraphUISection({ tslCode = "", onCodeChange = (v: any) => {} }) {
+//   const { translateAsync, ready } = useTranslationService();
+//   const [json, setJSON] = useState<any>(null);
+//   useEffect(() => {
+//     if (!tslCode) {
+//       return;
+//     }
 
-    translateAsync(`${tslCode}`)?.then((result: any) => {
-      setJSON(result.jsonGraph);
-    });
-  }, [tslCode, ready]);
+//     translateAsync(`${tslCode}`)?.then((result: any) => {
+//       setJSON(result.jsonGraph);
+//     });
+//   }, [tslCode, ready]);
 
-  if (!ready) {
-    return null;
-  }
+//   if (!ready) {
+//     return null;
+//   }
 
-  return (
-    <div className="w-full h-full">
-      {json && (
-        <GraphNodeUI
-          key={JSON.stringify(json)}
-          json={json}
-          //
-          onMaterialGraphJSONChange={(json: MaterialGraphJSON) => {
-            jsonToCode(json).then((code) => onCodeChange(code));
-          }}
-        ></GraphNodeUI>
-      )}
-    </div>
-  );
-}
+//   return (
+//     <div className="w-full h-full">
+//       {json && (
+//         <GraphNodeUI
+//           key={JSON.stringify(json)}
+//           json={json}
+//           //
+//           readOnly={true}
+//           onMaterialGraphJSONChange={(json: MaterialGraphJSON) => {
+//             jsonToCode(json).then((code) => onCodeChange(code));
+//           }}
+//         ></GraphNodeUI>
+//       )}
+//     </div>
+//   );
+// }
