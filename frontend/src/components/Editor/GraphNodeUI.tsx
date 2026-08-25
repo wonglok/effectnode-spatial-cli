@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { createContext, useContext, useMemo } from "react";
 import dagre from "@dagrejs/dagre";
 import {
   ReactFlow,
@@ -6,6 +6,7 @@ import {
   Controls,
   Handle,
   Position,
+  useReactFlow,
   type Node,
   type Edge,
   type NodeProps,
@@ -35,6 +36,7 @@ type TSLNodeData = {
   label: string;
   sublabel?: string;
   kind?: string;
+  attributeName?: string;
   inputs: Socket[];
   outputs: Socket[];
 };
@@ -50,6 +52,23 @@ const KIND_STYLES: Record<string, string> = {
   split: "border-teal-500/60",
   var: "border-slate-500/60",
 };
+
+// Attributes offered by the dropdown on `AttributeNode` nodes.
+const ATTRIBUTE_OPTIONS = [
+  "position",
+  "normal",
+  "tangent",
+  "bitangent",
+  "uv",
+  "uv1",
+  "uv2",
+  "color",
+  "instanceMatrix",
+];
+
+const AttributeChangeContext = createContext<
+  ((id: string, attributeName: string) => void) | undefined
+>(undefined);
 
 function fmt(value: unknown): string {
   if (Array.isArray(value)) return value.join(", ");
@@ -76,6 +95,7 @@ function describeNode(
         kind: "attribute",
         label: "attribute",
         sublabel: String(data._attributeName ?? ""),
+        attributeName: String(data._attributeName ?? ""),
       };
     case "OperatorNode":
       return {
@@ -319,7 +339,33 @@ function socketTop(index: number, count: number): string {
   return `${((index + 1) / (count + 1)) * 100}%`;
 }
 
-function TSLNodeView({ data }: NodeProps) {
+function AttributeSelect({ id, value }: { id: string; value: string }) {
+  const { updateNodeData } = useReactFlow();
+  const onAttributeChange = useContext(AttributeChangeContext);
+  const options = ATTRIBUTE_OPTIONS.includes(value)
+    ? ATTRIBUTE_OPTIONS
+    : [value, ...ATTRIBUTE_OPTIONS];
+
+  return (
+    <select
+      value={value}
+      onChange={(e) => {
+        const next = e.target.value;
+        updateNodeData(id, { attributeName: next, sublabel: next });
+        onAttributeChange?.(id, next);
+      }}
+      className="nodrag mt-0.5 w-full rounded border border-slate-600 bg-slate-700 px-1 py-0.5 font-mono text-[10px] text-slate-200 outline-none"
+    >
+      {options.map((o) => (
+        <option key={o} value={o}>
+          {o}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function TSLNodeView({ id, data }: NodeProps) {
   const d = data as TSLNodeData;
   const inputs = d.inputs ?? [];
   const outputs = d.outputs ?? [];
@@ -353,7 +399,9 @@ function TSLNodeView({ data }: NodeProps) {
         <div className="font-mono text-xs font-semibold text-slate-100">
           {d.label}
         </div>
-        {d.sublabel ? (
+        {d.attributeName !== undefined ? (
+          <AttributeSelect id={id} value={d.attributeName} />
+        ) : d.sublabel ? (
           <div className="mx-auto max-w-[130px] truncate font-mono text-[10px] text-slate-400">
             {d.sublabel}
           </div>
@@ -425,24 +473,31 @@ const defaultEdgeOptions = {
   style: { stroke: "#64748b", strokeWidth: 1.5 },
 };
 
-export function GraphNodeUI({ json }: { json: MaterialGraphJSON }) {
+export function GraphNodeUI({
+  json,
+  onAttributeChange,
+}: {
+  json: MaterialGraphJSON;
+  onAttributeChange?: (id: string, attributeName: string) => void;
+}) {
   const { nodes, edges } = useMemo(() => graphToFlow(json), [json]);
 
   return (
-    <div className="h-full w-full bg-slate-950">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        defaultEdgeOptions={defaultEdgeOptions}
-        fitView
-        fitViewOptions={{ padding: 0.2 }}
-        // proOptions={{ hideAttribution: true }}
-        className="bg-slate-950"
-      >
-        <Background color="#1e293b" gap={20} />
-        <Controls className="bg-slate-900! text-slate-200!" />
-      </ReactFlow>
-    </div>
+    <AttributeChangeContext.Provider value={onAttributeChange}>
+      <div className="h-full w-full bg-slate-950">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          defaultEdgeOptions={defaultEdgeOptions}
+          fitView
+          fitViewOptions={{ padding: 0.2 }}
+          className="bg-slate-950"
+        >
+          <Background color="#1e293b" gap={20} />
+          <Controls className="bg-slate-900! text-slate-200!" />
+        </ReactFlow>
+      </div>
+    </AttributeChangeContext.Provider>
   );
 }
