@@ -160,7 +160,11 @@ function GraphUISection({ tslCode = "" }) {
   return (
     <div className="w-full h-full">
       {json && (
-        <GraphNodeUI key={JSON.stringify(json)} json={json}></GraphNodeUI>
+        <GraphNodeUI
+          key={JSON.stringify(json)}
+          json={json}
+          //
+        ></GraphNodeUI>
       )}
     </div>
   );
