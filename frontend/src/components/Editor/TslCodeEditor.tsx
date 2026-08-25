@@ -79,7 +79,11 @@ function GraphEditorUnit({}: {}) {
 import * as THREE from 'three/webgpu'
 import * as TSL from 'three/tsl'
 
-return async function materialFunction ({ context }) {
+import { vec3 } from 'three/tsl';
+import { vec3 } from 'three/tsl';
+import { vec3 } from 'three/tsl';
+
+return async function materialFunction () {
 
     const material = new THREE.MeshPhysicalNodeMaterial({
       name: 'peach'
