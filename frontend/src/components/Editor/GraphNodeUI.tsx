@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import dagre from "@dagrejs/dagre";
 import {
   ReactFlow,
   Background,
@@ -183,53 +184,43 @@ function resolveId(id: string, nodeMap: Map<string, SerializedNode>): string {
   return cur;
 }
 
-/** Layered layout: material at the right, inputs fan out to the left. */
-function layout(nodes: Node[], edges: Edge[], rootId: string): void {
-  const depth = new Map<string, number>();
-  depth.set(rootId, 0);
+const NODE_WIDTH = 170;
+const NODE_HEIGHT = 60;
 
-  const children = new Map<string, string[]>();
-  for (const e of edges) {
-    const list = children.get(e.target) ?? [];
-    list.push(e.source);
-    children.set(e.target, list);
-  }
+/** Dagre horizontal (left-to-right) layout: material ends up on the right. */
+function layout(nodes: Node[], edges: Edge[]): void {
+  const g = new dagre.graphlib.Graph();
+  g.setDefaultEdgeLabel(() => ({}));
+  g.setGraph({
+    rankdir: "LR",
+    nodesep: 44,
+    ranksep: 130,
+    marginx: 20,
+    marginy: 20,
+  });
 
-  const queue = [rootId];
-  while (queue.length) {
-    const id = queue.shift()!;
-    const d = depth.get(id)!;
-    for (const childId of children.get(id) ?? []) {
-      if (!depth.has(childId)) {
-        depth.set(childId, d + 1);
-        queue.push(childId);
-      }
-    }
-  }
-
-  let maxDepth = 0;
-  for (const d of depth.values()) maxDepth = Math.max(maxDepth, d);
-
-  const byDepth = new Map<number, string[]>();
   for (const n of nodes) {
-    const d = depth.get(n.id) ?? 0;
-    const list = byDepth.get(d) ?? [];
-    list.push(n.id);
-    byDepth.set(d, list);
+    const d = n.data as TSLNodeData;
+    const height = Math.max(
+      NODE_HEIGHT,
+      Math.max(d.inputs?.length ?? 0, d.outputs?.length ?? 0) * 22 + 40,
+    );
+    g.setNode(n.id, { width: NODE_WIDTH, height });
   }
 
-  const X = 220;
-  const Y = 90;
-  for (const [d, ids] of byDepth) {
-    const total = ids.length;
-    ids.forEach((id, i) => {
-      const node = nodes.find((n) => n.id === id);
-      if (!node) return;
-      node.position = {
-        x: (maxDepth - d) * X,
-        y: i * Y - ((total - 1) * Y) / 2,
-      };
-    });
+  for (const e of edges) {
+    g.setEdge(e.source, e.target);
+  }
+
+  dagre.layout(g);
+
+  for (const n of nodes) {
+    const pos = g.node(n.id);
+    if (!pos) continue;
+    n.position = {
+      x: (pos.x ?? 0) - (pos.width ?? NODE_WIDTH) / 2,
+      y: (pos.y ?? 0) - (pos.height ?? NODE_HEIGHT) / 2,
+    };
   }
 }
 
@@ -320,7 +311,7 @@ function graphToFlow(json: MaterialGraphJSON): {
     });
   }
 
-  layout(nodes, edges, materialId);
+  layout(nodes, edges);
   return { nodes, edges };
 }
 
