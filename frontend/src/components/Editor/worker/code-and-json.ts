@@ -16,13 +16,13 @@ self.onmessage = (ev) => {
   let id = data.id;
 
   try {
-    let str = ``;
+    let importCode = ``;
     let lowerArr = "abcdefghijklmnopqrstuvwxyz".split("");
     for (let kn in TSL) {
       if (lowerArr.includes(kn.charAt(0))) {
         //
         let line = `const ${kn} = TSL["${kn}"]\n`;
-        str += line;
+        importCode += line;
         //
       }
     }
@@ -38,7 +38,8 @@ self.onmessage = (ev) => {
 
     code = noImportLines.join("\n");
 
-    code = `${str}\n${code}`;
+    console.log(importCode);
+    code = `${importCode}\n${code}`;
 
     let codeEval = new Function("TSL", "THREE", code);
 
