@@ -74,6 +74,13 @@ export function parseNodeMaterialToJSON(
       serializedNode.value = (node as any).value;
     }
 
+    // AttributeNode stores its attribute name (e.g. 'position', 'normal') in a
+    // private `_attributeName` field, which the underscore filter below skips.
+    // Surface it as `value` so hydration passes it back to the constructor.
+    if ("_attributeName" in node) {
+      serializedNode.value = (node as any)._attributeName;
+    }
+
     // Process properties and child nodes
     for (const key of Object.keys(node)) {
       if (key.startsWith("_") || key === "uuid") continue;
