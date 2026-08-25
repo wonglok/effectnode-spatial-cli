@@ -1,12 +1,12 @@
 import * as THREE from "three/webgpu";
 import * as TSL from "three/tsl";
-import { MeshPhysicalNodeMaterial } from "three/webgpu";
-import { color, float, mul } from "three/tsl";
+// import { MeshPhysicalNodeMaterial } from "three/webgpu";
+// import { color, float, mul } from "three/tsl";
 import {
   parseNodeMaterialToJSON,
-  hydrateJSONToNodeMaterial,
+  // hydrateJSONToNodeMaterial,
 } from "./materialParser";
-import { defaultNodeRegistry } from "./nodeRegistry";
+// import { defaultNodeRegistry } from "./nodeRegistry";
 
 self.onmessage = (ev) => {
   let rawdata = ev.data;
@@ -16,16 +16,40 @@ self.onmessage = (ev) => {
   let id = data.id;
 
   try {
-    let codeEval = new Function(code);
+    let str = ``;
+    let lowerArr = "abcdefghijklmnopqrstuvwxyz".split("");
+    for (let kn in TSL) {
+      if (lowerArr.includes(kn.charAt(0))) {
+        //
+        console.log(kn);
 
-    let resultFunc = codeEval();
+        let line = `const ${kn} = TSL["${kn}"]\n`;
 
-    resultFunc({ THREE, TSL })
-      .then((material: any) => {
+        str += line;
+        //
+      }
+    }
+
+    let all = code.split("\n");
+    let noImportLines = all.filter((r: string) => {
+      return !r.trim().startsWith("import");
+    });
+
+    code = noImportLines.join("\n");
+
+    code = `${str}\n${code}`;
+
+    let codeEval = new Function("TSL", "THREE", code);
+
+    let resultFunc = codeEval(TSL, THREE);
+
+    resultFunc({})
+      .then((result: any) => {
         // console.log(material);
 
         // Parse -> JSON
-        const jsonGraph = parseNodeMaterialToJSON(material);
+
+        const jsonGraph = parseNodeMaterialToJSON(result.material);
 
         self.postMessage(
           JSON.stringify({

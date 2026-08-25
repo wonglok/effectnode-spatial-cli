@@ -76,19 +76,19 @@ function GraphEditorUnit({}: {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [tslCode, setCode] = useState(
     `
+import * as THREE from 'three/webgpu'
+import * as TSL from 'three/tsl'
 
+return async function materialFunction ({ context }) {
 
-return async function materialFunction ({ THREE, TSL }) {
-    
     const material = new THREE.MeshPhysicalNodeMaterial({
-      name: 'loklok'
+      name: 'peach'
     })
 
-    material.colorNode = TSL.vec3(TSL.uv().y.mul(0.5).add(0.5), TSL.float(TSL.uv().x), TSL.float(0.3));
+    material.colorNode = vec3(uv().y.mul(0.5).add(0.5).mul(1.5), float(uv().x), float(0.3));
 
-    return material;
+    return { material };
 }
-
 
 `.trim(),
   );
