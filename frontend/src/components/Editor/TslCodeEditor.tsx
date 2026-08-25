@@ -30,6 +30,8 @@ import { Environment, OrbitControls } from "@react-three/drei";
 import { hydrateJSONToNodeMaterial } from "./worker/materialParser";
 import { defaultNodeRegistry } from "./worker/nodeRegistry";
 import { jsonToCode } from "./worker/json-to-code";
+import { GraphNodeUI } from "./GraphNodeUI";
+import { MaterialPreviewMesh } from "./MaterialPreviewMesh";
 // import { tslToJSON } from "../../sdk/code-material-json/convertTSLCodeToJSONAll";
 // import {
 //   convertJsonToTSLCodeAll,
@@ -76,7 +78,7 @@ function GraphEditorUnit({}: {}) {
 import * as THREE from 'three/webgpu'
 import * as TSL from 'three/tsl'
 
-export async function materialFunction () {
+return async function materialFunction () {
 
     const mat = new THREE.MeshPhysicalNodeMaterial();
 
@@ -119,6 +121,11 @@ export async function materialFunction () {
           onMount={handleMount}
           options={EDITOR_OPTIONS}
         />
+        {/* <div className="w-full h-1/3">
+          <div className="w-full h-full">
+            {tslCode && <GraphUISection tslCode={tslCode}></GraphUISection>}
+          </div>
+        </div> */}
         <div className="w-full h-1/2">
           {
             <WebGPUCanvas>
@@ -133,44 +140,20 @@ export async function materialFunction () {
   );
 }
 
-function MaterialPreviewMesh({ tslCode = "" }: { tslCode: string }) {
+function GraphUISection({ tslCode = "" }) {
+  let [json, setJSON] = useState<any>(null);
   const { translateAsync } = useTranslationService();
-  const [material, setMaterial] = useState<any>(null);
+
   useEffect(() => {
-    translateAsync(`${tslCode}`)
-      ?.then((r: any) => {
-        //
-        //
+    translateAsync(`${tslCode}`)?.then((result: any) => {
+      console.log(result);
+      setJSON(result);
+    });
+  }, [tslCode]);
 
-        console.log(r.jsonGraph);
-        let tslCode = jsonToCode(r.jsonGraph);
-        console.log(tslCode);
-
-        // Hydrate -> Re-created Material using auto-populated registry
-        const restoredMaterial = hydrateJSONToNodeMaterial(
-          r.jsonGraph,
-          MeshPhysicalNodeMaterial,
-          defaultNodeRegistry,
-        );
-
-        setTimeout(() => {
-          setMaterial(
-            <>
-              <mesh material={restoredMaterial}>
-                <sphereGeometry args={[1, 64, 64]}></sphereGeometry>
-              </mesh>
-            </>,
-          );
-        });
-      })
-      .catch((r) => {
-        console.error(r);
-      });
-
-    return () => {
-      setMaterial(null);
-    };
-  }, [translateAsync, tslCode]);
-
-  return <group>{material}</group>;
+  return (
+    <div className="w-full h-full">
+      {json && <GraphNodeUI json={json}></GraphNodeUI>}
+    </div>
+  );
 }

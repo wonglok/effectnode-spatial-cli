@@ -24,6 +24,7 @@ export const useTranslationService = () => {
         }
       }
     });
+
     setWorker(worker);
   }, []);
 
