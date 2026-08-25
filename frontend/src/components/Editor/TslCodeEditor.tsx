@@ -127,7 +127,7 @@ return async function materialFunction ({ THREE, TSL }) {
         <div className="w-full h-1/2">
           {
             <WebGPUCanvas>
-              <Ball tslCode={tslCode}></Ball>
+              <MaterialPreviewMesh tslCode={tslCode}></MaterialPreviewMesh>
               <Environment files={[`/hdr/venice_sunset_1k.hdr`]}></Environment>
             </WebGPUCanvas>
           }
@@ -137,7 +137,7 @@ return async function materialFunction ({ THREE, TSL }) {
   );
 }
 
-function Ball({ tslCode = "" }: { tslCode: string }) {
+function MaterialPreviewMesh({ tslCode = "" }: { tslCode: string }) {
   const { translateAsync } = useTranslationService();
 
   const [material, setMaterial] = useState<any>(null);
