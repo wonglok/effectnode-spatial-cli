@@ -15,52 +15,52 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 // import { Inspector } from "three/addons/inspector/Inspector.js";
 
 // import TSLGraphEditorDefault from "three/addons/inspector/extensions/tsl-graph/TSLGraphEditor.js";
-import { MeshPhysicalNodeMaterial } from "three/webgpu";
+import { MeshPhysicalNodeMaterial, SphereGeometry } from "three/webgpu";
 import { useTranslationService } from "./worker/use-translator";
 import { hydrateMaterialAsync } from "./worker/materialParser";
 import { defaultNodeRegistry } from "./worker/nodeRegistry";
-import { jsonToCode } from "./worker/json-to-code";
+// import { jsonToCode } from "./worker/json-to-code";
 import { MaterialGraphJSON } from "./worker/types";
 
-export function MaterialPreviewCodeMesh({ tslCode = "" }: { tslCode: string }) {
-  const { translateAsync } = useTranslationService();
-  const [material, setMaterial] = useState<any>(null);
-  useEffect(() => {
-    translateAsync(`${tslCode}`)
-      ?.then((r: any) => {
-        //
-        //
+// export function MaterialPreviewCodeMesh({ tslCode = "" }: { tslCode: string }) {
+//   const { translateAsync } = useTranslationService();
+//   const [material, setMaterial] = useState<any>(null);
+//   useEffect(() => {
+//     translateAsync(`${tslCode}`)
+//       ?.then((r: any) => {
+//         //
+//         //
 
-        // console.log(r.jsonGraph);
-        // let tslCode = jsonToCode(r.jsonGraph);
-        // console.log(tslCode);
+//         // console.log(r.jsonGraph);
+//         // let tslCode = jsonToCode(r.jsonGraph);
+//         // console.log(tslCode);
 
-        // Hydrate -> Re-created Material (re-evaluates source for TSL.Fn).
-        hydrateMaterialAsync(
-          r.jsonGraph,
-          MeshPhysicalNodeMaterial,
-          defaultNodeRegistry,
-        ).then((restoredMaterial: any) => {
-          setMaterial(
-            <>
-              <mesh material={restoredMaterial}>
-                <sphereGeometry args={[1, 64, 64]}></sphereGeometry>
-              </mesh>
-            </>,
-          );
-        });
-      })
-      .catch((r) => {
-        console.error(r);
-      });
+//         // Hydrate -> Re-created Material (re-evaluates source for TSL.Fn).
+//         hydrateMaterialAsync(
+//           r.jsonGraph,
+//           MeshPhysicalNodeMaterial,
+//           defaultNodeRegistry,
+//         ).then((restoredMaterial: any) => {
+//           setMaterial(
+//             <>
+//               <mesh material={restoredMaterial}>
+//                 <sphereGeometry args={[1, 64, 64]}></sphereGeometry>
+//               </mesh>
+//             </>,
+//           );
+//         });
+//       })
+//       .catch((r) => {
+//         console.error(r);
+//       });
 
-    return () => {
-      setMaterial(null);
-    };
-  }, [translateAsync, tslCode]);
+//     return () => {
+//       setMaterial(null);
+//     };
+//   }, [translateAsync, tslCode]);
 
-  return <group>{material}</group>;
-}
+//   return <group>{material}</group>;
+// }
 
 export function MaterialPreviewGarphMesh({
   jsonGraph,
@@ -69,6 +69,11 @@ export function MaterialPreviewGarphMesh({
 }) {
   const { translateAsync } = useTranslationService();
   const [material, setMaterial] = useState<any>(null);
+
+  let sphGeo = useMemo(() => {
+    return new SphereGeometry(1, 64, 64);
+  }, []);
+
   useEffect(() => {
     hydrateMaterialAsync(
       jsonGraph,
@@ -76,11 +81,10 @@ export function MaterialPreviewGarphMesh({
       defaultNodeRegistry,
     )
       .then((restoredMaterial: any) => {
+        //
         setMaterial(
           <>
-            <mesh material={restoredMaterial}>
-              <sphereGeometry args={[1, 64, 64]}></sphereGeometry>
-            </mesh>
+            <mesh geometry={sphGeo} material={restoredMaterial}></mesh>
           </>,
         );
       })
@@ -89,7 +93,7 @@ export function MaterialPreviewGarphMesh({
     return () => {
       setMaterial(null);
     };
-  }, [translateAsync, jsonGraph]);
+  }, [translateAsync, JSON.stringify(jsonGraph), sphGeo]);
 
   return <group>{material}</group>;
 }

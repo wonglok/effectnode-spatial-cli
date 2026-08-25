@@ -567,6 +567,7 @@ export function GraphEditorPage() {
               json={json}
               onMaterialGraphJSONChange={(nextJson) => {
                 setJson(nextJson);
+
                 jsonToCode(nextJson).then((code) => {
                   setTslCode(code);
                   if (projectID && materialSlug) {

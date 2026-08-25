@@ -152,17 +152,15 @@ return async function materialFunction() {
         />
 
         <div className="w-full h-1/2">
-          {
-            <WebGPUCanvas>
-              {json && (
-                <MaterialPreviewGarphMesh
-                  jsonGraph={json}
-                ></MaterialPreviewGarphMesh>
-              )}
-              <OrbitControls makeDefault></OrbitControls>
-              <Environment files={[`/hdr/venice_sunset_1k.hdr`]}></Environment>
-            </WebGPUCanvas>
-          }
+          <WebGPUCanvas>
+            {json && (
+              <MaterialPreviewGarphMesh
+                jsonGraph={json}
+              ></MaterialPreviewGarphMesh>
+            )}
+            <OrbitControls makeDefault></OrbitControls>
+            <Environment files={[`/hdr/venice_sunset_1k.hdr`]}></Environment>
+          </WebGPUCanvas>
         </div>
       </div>
     </>
