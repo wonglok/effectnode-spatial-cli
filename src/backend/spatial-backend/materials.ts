@@ -202,6 +202,9 @@ export async function saveMaterialGraph(
   );
   if (previous) {
     const backupId = Date.now().toString();
+    await fs.mkdir(path.join(backupsAbs(id, materialSlug), backupId), {
+      recursive: true,
+    });
     await writeJson(backupsRel(id, materialSlug, backupId), previous);
   }
 
@@ -273,6 +276,9 @@ export async function createMaterialBackup(
   );
   if (!current) throw new Error("Material not found");
   const backupId = Date.now().toString();
+  await fs.mkdir(path.join(backupsAbs(id, materialSlug), backupId), {
+    recursive: true,
+  });
   await writeJson(backupsRel(id, materialSlug, backupId), current);
   return { id: backupId, createdAt: new Date(Number(backupId)).toISOString() };
 }
