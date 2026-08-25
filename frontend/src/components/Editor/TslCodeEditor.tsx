@@ -76,15 +76,17 @@ function GraphEditorUnit({}: {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [tslCode, setCode] = useState(
     `
-      
-    
+
+
+//
+
 return async function genFunction ({ THREE, TSL }) {
 
     const mat = new THREE.MeshPhysicalNodeMaterial({
       name: 'loklok'
     })
 
-    mat.colorNode = TSL.vec3(TSL.uv().x.add(0.5), TSL.float(0.5), TSL.float(0.5));
+    mat.colorNode = TSL.vec3(TSL.uv().x.mul(2).add(-1), TSL.float(0.5), TSL.float(0.5));
 
     return mat
 }
