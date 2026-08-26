@@ -11,7 +11,6 @@ import { MaterialEditorPage } from "./pages/MaterialEditorPage";
 import { AiChatPage } from "./pages/materialEditor/AiChatPage";
 import { BuffersPage } from "./pages/materialEditor/BuffersPage";
 import { GlbViewerPage } from "./pages/materialEditor/GlbViewerPage";
-import { GraphEditorPage } from "./pages/materialEditor/GraphEditorPage";
 import { BackupsPage } from "./pages/materialEditor/BackupsPage";
 import { TslCodeEditorPage } from "./pages/materialEditor/TslCodeEditorPage";
 import { MaterialsPage } from "./pages/MaterialsPage";
@@ -81,7 +80,6 @@ createRoot(document.getElementById("root")!).render(
           <Route path="buffers" element={<BuffersPage />} />
           <Route path="ai-chat" element={<AiChatPage />} />
           <Route path="tsl-code-editor" element={<TslCodeEditorPage />} />
-          <Route path="graph-editor" element={<GraphEditorPage />} />
           <Route path="backups" element={<BackupsPage />} />
         </Route>
 

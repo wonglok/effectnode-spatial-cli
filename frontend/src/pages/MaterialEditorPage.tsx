@@ -5,7 +5,6 @@ import {
   IconChat,
   IconChevronLeft,
   IconCode,
-  IconEffects,
   IconMaterials,
   IconUndo,
 } from "../components/icons";
@@ -24,7 +23,6 @@ const TABS: Tab[] = [
   { segment: "buffers", label: "Buffers", icon: IconMaterials },
   { segment: "ai-chat", label: "AI Chat", icon: IconChat },
   { segment: "tsl-code-editor", label: "TSL Code", icon: IconCode },
-  { segment: "graph-editor", label: "Graph Editor", icon: IconEffects },
   { segment: "backups", label: "Backups", icon: IconUndo },
 ];
 
